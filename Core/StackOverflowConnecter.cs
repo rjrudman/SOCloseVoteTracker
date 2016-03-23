@@ -1,9 +1,8 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
-using Data.Entities;
 using RestSharp;
 using Utils;
 
@@ -14,35 +13,52 @@ namespace Core
         private const string BaseUrl = @"https://stackoverflow.com";
 
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
-        
-        public IList<int> GetRecentlyClosed()
+        private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
+
+        public class RecentCloseVote
+        {
+            public int QuestionId { get; set; }
+            public DateTime DateSeen { get; set; }
+            public int NumVotes { get; set; }
+            public string VoteType { get; set; }
+        }
+
+        public IList<RecentCloseVote> GetRecentCloseVotes()
         {
             var restClient = new RestClient(BaseUrl);
 
             var restRequest = new RestRequest("tools", Method.GET);
-            restRequest.AddParameter("tab", "close");
-            restRequest.AddParameter("daterange", "today");
-            restRequest.AddParameter("mode", "recentlyClosed");
-
             _authenticator.AuthenticateRequest(restRequest);
 
             restRequest.AddHeader("X-Requested-With", "XMLHttpRequest");
 
-            var response = restClient.Execute(restRequest);
-            var content = response.Content;
-            var parser = new HtmlParser(content);
-            parser.Parse();
-            var rows = parser.Result.QuerySelectorAll("table tr");
+            restRequest.AddParameter("tab", "close");
+            restRequest.AddParameter("daterange", "today");
+            restRequest.AddParameter("mode", "recentClose");
             
-            var reg = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
+            var response = restClient.Execute(restRequest);
+            var parser = new HtmlParser(response.Content);
+            parser.Parse();
+
+            var rows = parser.Result.QuerySelectorAll("table tr");
             return rows.Select(r =>
             {
+                var reason = r.QuerySelector(".close-reason").TextContent;
+                var votes = int.Parse(r.QuerySelector(".cnt").TextContent);
+
                 var link = r.QuerySelector("td a");
                 var url = link.GetAttribute("href");
 
-                var match = reg.Match(url);
+                var match = _questionIdRegex.Match(url);
                 var id = int.Parse(match.Groups["questionID"].Value);
-                return id;
+
+                return new RecentCloseVote
+                {
+                    DateSeen = DateTime.Now,
+                    NumVotes = votes,
+                    QuestionId = id,
+                    VoteType = reason
+                };
             }).ToList();
         }
     }
