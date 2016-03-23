@@ -38,7 +38,8 @@ namespace Utils
 #endif
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        public static string AuthKey { get; private set; }
-        
+        public static string UserName { get; private set; }
+        public static string Password { get; private set; }
+
     }
 }
