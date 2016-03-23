@@ -1,5 +1,1 @@
-[Build History](https://ci.appveyor.com/project/rjrudman/soclosevotetracker/history)
-
-| Master | ![Master](https://ci.appveyor.com/api/projects/status/1q7ysl8v12tq46aw/branch/master?svg=true) |
-| --- | --- |
-| Dev | ![Dev](https://ci.appveyor.com/api/projects/status/1q7ysl8v12tq46aw/branch/dev?svg=true) |
+![Master](https://ci.appveyor.com/api/projects/status/1q7ysl8v12tq46aw/branch/master?svg=true) [Build History](https://ci.appveyor.com/project/rjrudman/soclosevotetracker/history)
