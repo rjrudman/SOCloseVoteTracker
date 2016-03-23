@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AngleSharp, Version=0.3.1.29365, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AngleSharp.0.3.1\lib\portable-win+net45+wp80\AngleSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="RestSharp, Version=105.2.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RestSharp.105.2.3\lib\net452\RestSharp.dll</HintPath>
       <Private>True</Private>
@@ -52,6 +56,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Data\Data.csproj">
+      <Project>{7DD019C3-42A1-4F45-B2E4-1EE18BCD7CAF}</Project>
+      <Name>Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{1B18CBB6-FB29-4F96-B9F5-E870A9983C67}</Project>
       <Name>Utils</Name>

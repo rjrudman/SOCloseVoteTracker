@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using RestSharp;
-using Utils;
 
 namespace Core
 {
@@ -10,10 +9,19 @@ namespace Core
     {
         private const string BaseUrl = @"https://stackoverflow.com";
 
+        private readonly string _username;
+        private readonly string _password;
+
         private DateTime _refreshCookieTime = DateTime.MinValue;
         private readonly List<RestResponseCookie> _authCookies = new List<RestResponseCookie>();
 
-        private bool CurrentAuthCookiesValid() =>_refreshCookieTime > DateTime.Now;
+        private bool CurrentAuthCookiesValid() => _refreshCookieTime > DateTime.Now;
+
+        public StackOverflowAuthenticator(string username, string password)
+        {
+            _username = username;
+            _password = password;
+        }
 
         private IEnumerable<RestResponseCookie> GetAuthCookies()
         {
@@ -23,15 +31,15 @@ namespace Core
                 var restRequest = new RestRequest("users/login", Method.POST);
                 restClient.FollowRedirects = false;
 
-                restRequest.AddParameter("email", Configuration.UserName);
-                restRequest.AddParameter("password", Configuration.Password);
+                restRequest.AddParameter("email", _username);
+                restRequest.AddParameter("password", _password);
 
                 var response = restClient.Execute(restRequest);
 
                 _authCookies.AddRange(response.Cookies);
                 _refreshCookieTime = _authCookies.Min(ac => ac.Expires);
-
             }
+
             return _authCookies;
         }
 

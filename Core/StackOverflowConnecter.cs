@@ -1,4 +1,9 @@
-﻿using RestSharp;
+﻿using System.Collections;
+using System.Collections.Generic;
+using AngleSharp.Html;
+using Data.Entities;
+using RestSharp;
+using Utils;
 
 namespace Core
 {
@@ -6,9 +11,9 @@ namespace Core
     {
         private const string BaseUrl = @"https://stackoverflow.com";
 
-        private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator();
+        private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
         
-        public void GetRecentlyClosed()
+        public IList<Question> GetRecentlyClosed()
         {
             var restClient = new RestClient(BaseUrl);
 
@@ -22,6 +27,10 @@ namespace Core
             restRequest.AddHeader("X-Requested-With", "XMLHttpRequest");
 
             var response = restClient.Execute(restRequest);
+            var parser = new HtmlParser(response.Content);
+            parser.Parse();
+            var example = parser.Result.QuerySelectorAll("");
+            return null;
         }
     }
 }
