@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
+using Core.StackOverflowResults;
 using RestSharp;
 using Utils;
 
@@ -14,14 +15,6 @@ namespace Core
 
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
-
-        public class RecentCloseVote
-        {
-            public int QuestionId { get; set; }
-            public DateTime DateSeen { get; set; }
-            public int NumVotes { get; set; }
-            public string VoteType { get; set; }
-        }
 
         public IList<RecentCloseVote> GetRecentCloseVotes()
         {
@@ -54,9 +47,9 @@ namespace Core
 
                 return new RecentCloseVote
                 {
+                    QuestionId = id,
                     DateSeen = DateTime.Now,
                     NumVotes = votes,
-                    QuestionId = id,
                     VoteType = reason
                 };
             }).ToList();
