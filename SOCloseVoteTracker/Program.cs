@@ -1,13 +1,13 @@
-﻿namespace SOCloseVoteTracker
+﻿using Core;
+
+namespace SOCloseVoteTracker
 {
     class Program
     {
-        private const string BaseURL = @"https://stackoverflow.com";
-        static void Main(string[] args)
+        static void Main()
         {
-            //GetRecentlyClosed();
+            var connecter = new StackOverflowConnecter();
+            var questions = connecter.GetRecentCloseVotes();
         }
-
-        
     }
 }

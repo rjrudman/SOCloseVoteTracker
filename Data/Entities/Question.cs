@@ -8,6 +8,7 @@ namespace Data.Entities
         [Key]
         public int Id { get; set; }
 
+        public string Title { get; set; }
         public string Body { get; set; }
         public int VoteCount { get; set; }
         public bool Closed { get; set; }
