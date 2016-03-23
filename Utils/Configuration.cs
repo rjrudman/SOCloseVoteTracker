@@ -9,7 +9,7 @@ namespace Utils
 {
     public static class Configuration
     {
-        private static readonly string SettingsFileLocation = ConfigurationManager.AppSettings["RootDirectory"]  + "settings.json";
+        private static readonly string SettingsFileLocation = ConfigurationManager.AppSettings["SettingsFileLocation"];
 
         /// <summary>
         /// Configuration is loaded once at startup and cached
@@ -37,8 +37,9 @@ namespace Utils
         public static string DefaultConfigurationFile => JsonConvert.SerializeObject(typeof(Configuration).GetProperties().Where(p => p.Name != nameof(DefaultConfigurationFile)).ToDictionary(p => p.Name, p => p.GetValue(null)), Formatting.Indented);
 #endif
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        public static string AuthKey { get; private set; }
-        
+        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        public static string UserName { get; private set; }
+        public static string Password { get; private set; }
+
     }
 }

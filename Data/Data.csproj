@@ -51,12 +51,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataContext.cs" />
+    <Compile Include="Entities\Question.cs" />
+    <Compile Include="Entities\Tag.cs" />
+    <Compile Include="Migrations\201603230537050_BasicQuestionsAndTags.cs" />
+    <Compile Include="Migrations\201603230537050_BasicQuestionsAndTags.Designer.cs">
+      <DependentUpon>201603230537050_BasicQuestionsAndTags.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201603230537050_BasicQuestionsAndTags.resx">
+      <DependentUpon>201603230537050_BasicQuestionsAndTags.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
