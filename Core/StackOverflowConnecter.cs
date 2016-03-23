@@ -11,14 +11,14 @@ namespace Core
 {
     public class StackOverflowConnecter
     {
-        private const string BaseUrl = @"https://stackoverflow.com";
+        private const string BASE_URL = @"https://stackoverflow.com";
 
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
 
-        public IList<RecentCloseVote> GetRecentCloseVotes()
+        public IList<RecentCloseVote> GetRecentCloseVoteIds()
         {
-            var restClient = new RestClient(BaseUrl);
+            var restClient = new RestClient(BASE_URL);
 
             var restRequest = new RestRequest("tools", Method.GET);
             _authenticator.AuthenticateRequest(restRequest);

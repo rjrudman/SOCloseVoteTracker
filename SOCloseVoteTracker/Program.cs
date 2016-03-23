@@ -7,7 +7,7 @@ namespace SOCloseVoteTracker
         static void Main()
         {
             var connecter = new StackOverflowConnecter();
-            var questions = connecter.GetRecentCloseVotes();
+            var questions = connecter.GetRecentCloseVoteIds();
         }
     }
 }
