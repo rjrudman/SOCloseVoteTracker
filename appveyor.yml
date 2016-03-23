@@ -1,0 +1,13 @@
+version: 0.0.{build}.0
+
+configuration: Release
+
+platform: Any CPU
+
+before_build:
+- nuget restore
+
+build:
+  project: SOCloseVoteTracker.sln
+  parallel: true
+  verbosity: minimal
