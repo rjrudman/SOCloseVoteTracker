@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -12,6 +13,8 @@ namespace Data.Entities
 
         public string Title { get; set; }
         public bool Closed { get; set; }
+
+        public DateTime LastUpdated { get; set; }
 
         public IList<Tag> Tags { get; set; }
 

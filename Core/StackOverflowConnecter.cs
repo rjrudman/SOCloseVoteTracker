@@ -18,7 +18,7 @@ namespace Core
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
 
-        public IList<RecentCloseVote> GetRecentCloseVoteQuestionIds()
+        private IList<int> GetCloseVoteQueue(string mode)
         {
             var restClient = new RestClient(SITE_URL);
 
@@ -29,8 +29,8 @@ namespace Core
 
             restRequest.AddParameter("tab", "close");
             restRequest.AddParameter("daterange", "today");
-            restRequest.AddParameter("mode", "recentClose");
-            
+            restRequest.AddParameter("mode", mode);
+
             var response = restClient.Execute(restRequest);
             var parser = new HtmlParser(response.Content);
             parser.Parse();
@@ -38,23 +38,24 @@ namespace Core
             var rows = parser.Result.QuerySelectorAll("table tr");
             return rows.Select(r =>
             {
-                var reason = r.QuerySelector(".close-reason").TextContent;
-                var votes = int.Parse(r.QuerySelector(".cnt").TextContent);
-
                 var link = r.QuerySelector("td a");
                 var url = link.GetAttribute("href");
 
                 var match = _questionIdRegex.Match(url);
                 var id = int.Parse(match.Groups["questionID"].Value);
 
-                return new RecentCloseVote
-                {
-                    QuestionId = id,
-                    DateSeen = DateTime.Now,
-                    NumVotes = votes,
-                    VoteType = reason
-                };
+                return id;
             }).ToList();
+        }
+
+        public IList<int> GetMostVotedCloseVotesQuestionIds()
+        {
+            return GetCloseVoteQueue("topClose");
+        }
+
+        public IList<int> GetRecentCloseVoteQuestionIds()
+        {
+            return GetCloseVoteQueue("recentClose");
         }
 
         public QuestionModel GetQuestionInformation(int questionId)
