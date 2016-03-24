@@ -30,7 +30,48 @@ namespace Core.Workers
         public static void QueryQuestions(IEnumerable<int> questionIds)
         {
             var connecter = new StackOverflowConnecter();
+            foreach (var questionId in questionIds)
+            {
+                var question = connecter.GetQuestionInformation(questionId);
+                using (var context = new DataContext())
+                {
+                    var tags = question.Tags.Select(tt => tt.TagName).ToList();
+                    
+                    var connection = context.Database.Connection;
+                    using (var trans = connection.BeginTransaction())
+                    {
+                        const string insertTagString = @"
+IF NOT EXISTS (SELECT NULL FROM Tags WHERE TagName = @tagName)
+BEGIN
+    INSERT INTO Tags(TagName) VALUES (@tagName)
+END
+";
+                        foreach (var tag in tags)
+                            connection.Execute(insertTagString, new {tagName = tag}, trans);
 
+                        const string insertQuestionString = @"
+IF NOT EXISTS (SELECT NULL FROM Questions WHERE Id = @Id)
+BEGIN
+    INSERT INTO Questions(VoteCount, Closed, Title) VALUES (@VoteCount, @Closed, @Title)
+ELSE
+    UPDATE Questions
+    SET VoteCount = @VoteCount, Closed = @Closed, Title = @Title
+    WHERE Id = @Id
+END
+";
+                        connection.Execute(insertQuestionString, question, trans);
+
+                        const string insertQuestionTag = @"
+IF NOT EXISTS (SELECT NULL FROM QuestionTags WHERE QuestionID = @questionID AND TagId = @tagName)
+BEGIN
+    INSERT INTO QuestionTags(QuestionID, TagId) VALUES (@questionID, @tagName)
+END
+";
+                        foreach (var tag in tags)
+                            connection.Execute(insertQuestionTag, new {questionID = question.Id, tagName = tag});
+                    }
+                }
+            }
         }
     }
 }

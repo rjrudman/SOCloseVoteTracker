@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.StackOverflowResults;
 using Data.Entities;
-using Newtonsoft.Json;
 using RestSharp;
 using Utils;
 
@@ -73,13 +72,14 @@ namespace Core
             var numFlags = int.Parse(parser.Result.QuerySelector(".existing-flag-count")?.TextContent ?? "0");
             var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
             var isClosed = parser.Result.QuerySelectorAll(".question-status").Any();
-            
+
             return new Question
             {
                 Closed = isClosed,
                 VoteCount = numFlags,
                 Title = title,
-                Id = questionId
+                Id = questionId,
+                Tags = tags.Select(t => new Tag {TagName = t}).ToList()
             };
         }
     }

@@ -11,8 +11,9 @@ namespace SOCloseVoteTracker
     {
         static void Main()
         {
-            var qi = new StackOverflowConnecter().GetQuestionInformation(36191145); //Closed
-            var qi2 = new StackOverflowConnecter().GetQuestionInformation(36191338); //Close votes
+            Pollers.QueryQuestions(new[] { 36191145 , 36191338 });
+            //var qi = new StackOverflowConnecter().GetQuestionInformation(36191145); //Closed
+            //var qi2 = new StackOverflowConnecter().GetQuestionInformation(36191338); //Close votes
 
             //GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
