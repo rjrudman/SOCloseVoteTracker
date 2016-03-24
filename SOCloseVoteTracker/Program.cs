@@ -11,22 +11,25 @@ namespace SOCloseVoteTracker
     {
         static void Main()
         {
-            GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
+            var qi = new StackOverflowConnecter().GetQuestionInformation(36191145); //Closed
+            var qi2 = new StackOverflowConnecter().GetQuestionInformation(36191338); //Close votes
 
-            var stopping = false;
+            //GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
-            var t = new Thread(() =>
-            {
-                RecurringJob.AddOrUpdate(() => Pollers.PollCloseVotes(), Cron.Minutely);
+            //var stopping = false;
 
-            });
-            t.Start();
+            //var t = new Thread(() =>
+            //{
+            //    RecurringJob.AddOrUpdate(() => Pollers.PollCloseVotes(), Cron.Minutely);
 
-            using (new BackgroundJobServer())
-            {
-                while (!stopping)
-                    Thread.Sleep(10000);
-            }
+            //});
+            //t.Start();
+
+            //using (new BackgroundJobServer())
+            //{
+            //    while (!stopping)
+            //        Thread.Sleep(10000);
+            //}
         }
 
     }

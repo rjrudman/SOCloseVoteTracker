@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Dapper;
 using Data;
 using Hangfire;
@@ -22,15 +23,13 @@ namespace Core.Workers
 
                 var questionIdsToPoll = questionIds.Except(alreadyExistingQuestions).ToList();
 
-                foreach (var questionIdToPoll in questionIdsToPoll)
-                    BackgroundJob.Enqueue(() => QueryQuestion(questionIdToPoll));
+                BackgroundJob.Enqueue(() => QueryQuestions(questionIdsToPoll));
             }
         }
 
-        public static void QueryQuestion(int questionId)
+        public static void QueryQuestions(IEnumerable<int> questionIds)
         {
-            //Hit the page and download complete information about the question.
-            var a = 0;
+            var connecter = new StackOverflowConnecter();
 
         }
     }
