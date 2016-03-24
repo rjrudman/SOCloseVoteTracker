@@ -14,6 +14,8 @@ namespace Data.Entities
         public bool Closed { get; set; }
 
         public IList<Tag> Tags { get; set; }
-        public IList<VoteType> CloseVotes { get; set; }
+
+        [InverseProperty("Question")]
+        public IList<QuestionVote> QuestionVotes { get; set; }
     }
 }

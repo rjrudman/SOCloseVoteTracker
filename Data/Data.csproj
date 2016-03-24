@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="DataContext.cs" />
     <Compile Include="Entities\Question.cs" />
+    <Compile Include="Entities\QuestionVote.cs" />
     <Compile Include="Entities\Tag.cs" />
     <Compile Include="Entities\VoteType.cs" />
     <Compile Include="Migrations\201603240230402_InitialSchema.cs" />
@@ -67,6 +68,14 @@
     <Compile Include="Migrations\201603240307290_StoreCloseVotes.cs" />
     <Compile Include="Migrations\201603240307290_StoreCloseVotes.Designer.cs">
       <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201603240410050_CloseVotes.cs" />
+    <Compile Include="Migrations\201603240410050_CloseVotes.Designer.cs">
+      <DependentUpon>201603240410050_CloseVotes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.cs" />
+    <Compile Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.Designer.cs">
+      <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -81,6 +90,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201603240307290_StoreCloseVotes.resx">
       <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201603240410050_CloseVotes.resx">
+      <DependentUpon>201603240410050_CloseVotes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.resx">
+      <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

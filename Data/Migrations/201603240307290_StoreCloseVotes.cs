@@ -50,7 +50,7 @@ VALUES (2, 'Migration')
 INSERT INTO VoteTypes(Id, Description)
 VALUES (3, 'Other')
 
-<!-- These IDs are not taken from stack overflow. Offset at 1000 to prevent collisions of new close reasons (it uses a string rather than an integer for these) -->
+-- These IDs are not taken from stack overflow. Offset at 1000 to prevent collisions of new close reasons (it uses a string rather than an integer for these)
 INSERT INTO VoteTypes(Id, Description)
 VALUES (1000, 'Duplicate')
 INSERT INTO VoteTypes(Id, Description)

@@ -24,11 +24,15 @@ namespace Data
 
         public DbSet<Question> Questions { get; set; }
         public DbSet<Tag> Tags { get; set; }
-        
+        public DbSet<VoteType> VoteTypes { get; set; }
+        public DbSet<QuestionVote> QuestionVotes { get; set; }
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Question>().ToTable("Questions");
             modelBuilder.Entity<Tag>().ToTable("Tags");
+            modelBuilder.Entity<VoteType>().ToTable("VoteTypes");
+            modelBuilder.Entity<QuestionVote>().ToTable("QuestionVotes");
 
             modelBuilder.Entity<Question>()
                 .HasMany(q => q.Tags)
@@ -37,15 +41,6 @@ namespace Data
                     m.MapLeftKey("QuestionId")
                      .MapRightKey("TagId")
                      .ToTable("QuestionTags")
-                );
-
-            modelBuilder.Entity<Question>()
-                .HasMany(q => q.CloseVotes)
-                .WithMany(t => t.Questions)
-                .Map(m =>
-                    m.MapLeftKey("QuestionId")
-                        .MapRightKey("VoteTypeId")
-                        .ToTable("QuestionVotes")
                 );
 
             base.OnModelCreating(modelBuilder);

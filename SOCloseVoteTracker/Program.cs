@@ -1,4 +1,9 @@
-﻿using Core.Workers;
+﻿using System;
+using System.Threading;
+using Core.Workers;
+using Data;
+using Hangfire;
+using Hangfire.Server;
 
 namespace SOCloseVoteTracker
 {
@@ -6,7 +11,21 @@ namespace SOCloseVoteTracker
     {
         static void Main()
         {
-            Pollers.QueryQuestions(new[] { 36191338 });
+            GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
+
+            RecurringJob.AddOrUpdate(() => Pollers.QueryRecentCloseVotes(), "*/5 * * * *"); //Every 5 minutes
+            var thread = new Thread(() =>
+            {
+                using (new BackgroundJobServer())
+                {
+                    while(true) Thread.Sleep(1000);
+                }
+            });
+            thread.Start();
+
+
+            Console.ReadLine();
+
         }
 
     }

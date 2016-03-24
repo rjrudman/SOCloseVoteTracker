@@ -12,6 +12,7 @@ namespace Data.Entities
 
         public string Description { get; set; }
 
-        public IList<Question> Questions { get; set; }
+        [InverseProperty("VoteType")]
+        public IList<QuestionVote> QuestionVotes { get; set; }
     }
 }

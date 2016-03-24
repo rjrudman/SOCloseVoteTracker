@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Core.Models;
 using Dapper;
@@ -34,6 +35,11 @@ BEGIN
 END
 ";
 
+        const string INSERT_QUESTION_VOTE_SQL = @"
+INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETDATE())
+";
+
+
 
         //Here, we only want to queue up a 'get data for this question' job, nothing else.
         public static void QueryRecentCloseVotes()
@@ -59,6 +65,12 @@ END
         {
             using (var context = new DataContext())
             {
+                var existingVotes = context.Questions
+                    .Where(q => q.Id == question.Id)
+                    .SelectMany(q => q.QuestionVotes)
+                    .GroupBy(ev => ev.VoteTypeId)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
                 var connection = context.Database.Connection;
                 connection.Open();
                 using (var trans = connection.BeginTransaction())
@@ -69,6 +81,18 @@ END
                         //Todo: Delete old/removed tags? If so, hard or soft delete?
                         connection.Execute(UPSERT_TAG_SQL, new { tagName = tag }, trans);
                         connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
+                    }
+
+                    foreach (var voteGroup in question.CloseVotes)
+                    {
+                        int numToInsert;
+                        if (existingVotes.ContainsKey(voteGroup.Key))
+                            numToInsert = existingVotes[voteGroup.Key] - voteGroup.Value;
+                        else
+                            numToInsert = voteGroup.Value;
+
+                        for (var i = 0; i < numToInsert; i++)
+                            connection.Execute(INSERT_QUESTION_VOTE_SQL, new {questionId = question.Id, voteTypeId = voteGroup.Key}, trans);
                     }
 
                     trans.Commit();
