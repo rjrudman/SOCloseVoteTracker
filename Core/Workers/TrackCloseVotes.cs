@@ -3,12 +3,37 @@ using System.Linq;
 using Dapper;
 using Data;
 using Hangfire;
-using MoreLinq;
 
 namespace Core.Workers
 {
     public static class Pollers
     {
+        const string UPSERT_QUESTION_SQL = @"
+IF NOT EXISTS (SELECT NULL FROM Questions WHERE Id = @Id)
+BEGIN
+    INSERT INTO Questions(Id, VoteCount, Closed, Title) VALUES (@Id, @VoteCount, @Closed, @Title)
+END
+ELSE
+BEGIN
+    UPDATE Questions
+    SET VoteCount = @VoteCount, Closed = @Closed, Title = @Title
+    WHERE Id = @Id
+END
+";
+        const string UPSERT_TAG_SQL = @"
+IF NOT EXISTS (SELECT NULL FROM Tags WHERE TagName = @tagName)
+BEGIN
+    INSERT INTO Tags(TagName) VALUES (@tagName)
+END
+";
+        const string UPSERT_QUESTION_TAG_SQL = @"
+IF NOT EXISTS (SELECT NULL FROM QuestionTags WHERE QuestionID = @questionID AND TagId = @tagName)
+BEGIN
+    INSERT INTO QuestionTags(QuestionID, TagId) VALUES (@questionID, @tagName)
+END
+";
+
+
         //Here, we only want to queue up a 'get data for this question' job, nothing else.
         public static void PollCloseVotes()
         {
@@ -38,37 +63,17 @@ namespace Core.Workers
                     var tags = question.Tags.Select(tt => tt.TagName).ToList();
                     
                     var connection = context.Database.Connection;
+                    connection.Open();
                     using (var trans = connection.BeginTransaction())
                     {
-                        const string insertTagString = @"
-IF NOT EXISTS (SELECT NULL FROM Tags WHERE TagName = @tagName)
-BEGIN
-    INSERT INTO Tags(TagName) VALUES (@tagName)
-END
-";
+                        connection.Execute(UPSERT_QUESTION_SQL, question, trans);
                         foreach (var tag in tags)
-                            connection.Execute(insertTagString, new {tagName = tag}, trans);
-
-                        const string insertQuestionString = @"
-IF NOT EXISTS (SELECT NULL FROM Questions WHERE Id = @Id)
-BEGIN
-    INSERT INTO Questions(VoteCount, Closed, Title) VALUES (@VoteCount, @Closed, @Title)
-ELSE
-    UPDATE Questions
-    SET VoteCount = @VoteCount, Closed = @Closed, Title = @Title
-    WHERE Id = @Id
-END
-";
-                        connection.Execute(insertQuestionString, question, trans);
-
-                        const string insertQuestionTag = @"
-IF NOT EXISTS (SELECT NULL FROM QuestionTags WHERE QuestionID = @questionID AND TagId = @tagName)
-BEGIN
-    INSERT INTO QuestionTags(QuestionID, TagId) VALUES (@questionID, @tagName)
-END
-";
-                        foreach (var tag in tags)
-                            connection.Execute(insertQuestionTag, new {questionID = question.Id, tagName = tag});
+                        {
+                            connection.Execute(UPSERT_TAG_SQL, new {tagName = tag}, trans);
+                            connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
+                        }
+                        
+                        trans.Commit();
                     }
                 }
             }
