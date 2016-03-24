@@ -7,7 +7,7 @@ namespace Core
 {
     class StackOverflowAuthenticator
     {
-        private const string BaseUrl = @"https://stackoverflow.com";
+        private const string BASE_URL = @"https://stackoverflow.com";
 
         private readonly string _username;
         private readonly string _password;
@@ -27,7 +27,7 @@ namespace Core
         {
             if (!CurrentAuthCookiesValid())
             {
-                var restClient = new RestClient(BaseUrl);
+                var restClient = new RestClient(BASE_URL);
                 var restRequest = new RestRequest("users/login", Method.POST);
                 restClient.FollowRedirects = false;
 

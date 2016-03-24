@@ -8,7 +8,7 @@ namespace Data
 {
     public class DataContext : DbContext
     {
-        private const string CONNECTION_STRING_NAME = "DBConnectionString";
+        public const string CONNECTION_STRING_NAME = "DBConnectionString";
 
         /// <summary>
         /// Get a plain connection to the database. Can be used with dapper. Uses the same connection string as EntityFramework
