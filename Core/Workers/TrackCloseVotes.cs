@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Models;
 using Dapper;
 using Data;
 using Hangfire;
@@ -11,12 +12,12 @@ namespace Core.Workers
         const string UPSERT_QUESTION_SQL = @"
 IF NOT EXISTS (SELECT NULL FROM Questions WHERE Id = @Id)
 BEGIN
-    INSERT INTO Questions(Id, VoteCount, Closed, Title) VALUES (@Id, @VoteCount, @Closed, @Title)
+    INSERT INTO Questions(Id, Closed, Title) VALUES (@Id, @Closed, @Title)
 END
 ELSE
 BEGIN
     UPDATE Questions
-    SET VoteCount = @VoteCount, Closed = @Closed, Title = @Title
+    SET Closed = @Closed, Title = @Title
     WHERE Id = @Id
 END
 ";
@@ -35,21 +36,13 @@ END
 
 
         //Here, we only want to queue up a 'get data for this question' job, nothing else.
-        public static void PollCloseVotes()
+        public static void QueryRecentCloseVotes()
         {
             var connecter = new StackOverflowConnecter();
-            var questions = connecter.GetRecentCloseVoteIds();
+            var questions = connecter.GetRecentCloseVoteQuestionIds();
 
             var questionIds = questions.Select(q => q.QuestionId).ToList();
-
-            using (var con = new DataContext())
-            {
-                var alreadyExistingQuestions = con.Questions.Where(q => questionIds.Contains(q.Id)).Select(q => q.Id);
-
-                var questionIdsToPoll = questionIds.Except(alreadyExistingQuestions).ToList();
-
-                BackgroundJob.Enqueue(() => QueryQuestions(questionIdsToPoll));
-            }
+            BackgroundJob.Enqueue(() => QueryQuestions(questionIds));
         }
 
         public static void QueryQuestions(IEnumerable<int> questionIds)
@@ -58,23 +51,27 @@ END
             foreach (var questionId in questionIds)
             {
                 var question = connecter.GetQuestionInformation(questionId);
-                using (var context = new DataContext())
+                UpsertQuestionInformation(question);
+            }
+        }
+
+        private static void UpsertQuestionInformation(QuestionModel question)
+        {
+            using (var context = new DataContext())
+            {
+                var connection = context.Database.Connection;
+                connection.Open();
+                using (var trans = connection.BeginTransaction())
                 {
-                    var tags = question.Tags.Select(tt => tt.TagName).ToList();
-                    
-                    var connection = context.Database.Connection;
-                    connection.Open();
-                    using (var trans = connection.BeginTransaction())
+                    connection.Execute(UPSERT_QUESTION_SQL, question, trans);
+                    foreach (var tag in question.Tags)
                     {
-                        connection.Execute(UPSERT_QUESTION_SQL, question, trans);
-                        foreach (var tag in tags)
-                        {
-                            connection.Execute(UPSERT_TAG_SQL, new {tagName = tag}, trans);
-                            connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
-                        }
-                        
-                        trans.Commit();
+                        //Todo: Delete old/removed tags? If so, hard or soft delete?
+                        connection.Execute(UPSERT_TAG_SQL, new { tagName = tag }, trans);
+                        connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
                     }
+
+                    trans.Commit();
                 }
             }
         }

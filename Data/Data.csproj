@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -58,9 +59,14 @@
     <Compile Include="DataContext.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\Tag.cs" />
+    <Compile Include="Entities\VoteType.cs" />
     <Compile Include="Migrations\201603240230402_InitialSchema.cs" />
     <Compile Include="Migrations\201603240230402_InitialSchema.Designer.cs">
       <DependentUpon>201603240230402_InitialSchema.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201603240307290_StoreCloseVotes.cs" />
+    <Compile Include="Migrations\201603240307290_StoreCloseVotes.Designer.cs">
+      <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -72,6 +78,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\201603240230402_InitialSchema.resx">
       <DependentUpon>201603240230402_InitialSchema.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201603240307290_StoreCloseVotes.resx">
+      <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

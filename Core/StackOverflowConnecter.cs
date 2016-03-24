@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
+using Core.Models;
 using Core.StackOverflowResults;
-using Data.Entities;
 using RestSharp;
 using Utils;
 
@@ -18,7 +18,7 @@ namespace Core
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
 
-        public IList<RecentCloseVote> GetRecentCloseVoteIds()
+        public IList<RecentCloseVote> GetRecentCloseVoteQuestionIds()
         {
             var restClient = new RestClient(SITE_URL);
 
@@ -57,7 +57,7 @@ namespace Core
             }).ToList();
         }
 
-        public Question GetQuestionInformation(int questionId)
+        public QuestionModel GetQuestionInformation(int questionId)
         {
             var restClient = new RestClient(SITE_URL);
 
@@ -69,18 +69,81 @@ namespace Core
             parser.Parse();
 
             var tags = parser.Result.QuerySelectorAll(".post-taglist .post-tag").Select(t => t.TextContent);
-            var numFlags = int.Parse(parser.Result.QuerySelector(".existing-flag-count")?.TextContent ?? "0");
             var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
             var isClosed = parser.Result.QuerySelectorAll(".question-status").Any();
 
-            return new Question
+            var votes = isClosed 
+                ? new Dictionary<int, int>() : 
+                GetCloseVotes(questionId);
+            
+            return new QuestionModel
             {
                 Closed = isClosed,
-                VoteCount = numFlags,
                 Title = title,
                 Id = questionId,
-                Tags = tags.Select(t => new Tag {TagName = t}).ToList()
+                Tags = tags.ToList(),
+                CloseVotes = votes
             };
+        }
+
+        //TODO: Tidy this logic up a bit (a central area mapping top-level close reason to an ID would be nice).
+        private Dictionary<int, int> GetCloseVotes(int questionId)
+        {
+            var restClient = new RestClient(SITE_URL);
+
+            var restRequest = new RestRequest($"flags/questions/{questionId}/close/popup", Method.GET);
+            _authenticator.AuthenticateRequest(restRequest);
+
+            var response = restClient.Execute(restRequest);
+            var parser = new HtmlParser(response.Content);
+            parser.Parse();
+
+            var closeVoteTags = parser.Result.QuerySelectorAll(".bounty-indicator-tab[title=\"number of votes already cast\"]");
+
+            var votes = new Dictionary<int, int>();
+
+            foreach (var closeVoteTag in closeVoteTags)
+            {
+                var topLevelCloseReasonNode = closeVoteTag.ParentElement.QuerySelector("input[name=\"close-reason\"]");
+                int closeVoteTypeId;
+                if (topLevelCloseReasonNode != null)
+                {
+                    var topLevelCloseReason = topLevelCloseReasonNode.GetAttribute("value");
+                    switch (topLevelCloseReason)
+                    {
+                        case "Duplicate":
+                            closeVoteTypeId = 1000;
+                            break;
+                        case "OffTopic":
+                            continue;
+                        case "Unclear":
+                            closeVoteTypeId = 1001;
+                            break;
+                        case "TooBroad":
+                            closeVoteTypeId = 1002;
+                            break;
+                        case "OpinionBased":
+                            closeVoteTypeId = 1003;
+                            break;
+                        default:
+                            continue;
+                    }
+                }
+                else
+                {
+                    var offtopicLevelCloseReasonNode = closeVoteTag.ParentElement.ParentElement.QuerySelector("input[name=\"close-as-off-topic-reason\"]");
+                    if (offtopicLevelCloseReasonNode == null)
+                        continue;
+
+                    closeVoteTypeId = int.Parse(offtopicLevelCloseReasonNode.GetAttribute("value"));
+                }
+                if (!votes.ContainsKey(closeVoteTypeId))
+                    votes[closeVoteTypeId] = 0;
+
+                votes[closeVoteTypeId]+= int.Parse(closeVoteTag.TextContent);
+            }
+
+            return votes;
         }
     }
 }
