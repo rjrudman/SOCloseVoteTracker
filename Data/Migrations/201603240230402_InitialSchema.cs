@@ -2,7 +2,7 @@ namespace Data.Migrations
 {
     using System.Data.Entity.Migrations;
     
-    public partial class BasicQuestionsAndTags : DbMigration
+    public partial class InitialSchema : DbMigration
     {
         public override void Up()
         {
@@ -10,8 +10,8 @@ namespace Data.Migrations
                 "dbo.Questions",
                 c => new
                     {
-                        Id = c.Int(nullable: false, identity: true),
-                        Body = c.String(),
+                        Id = c.Int(nullable: false),
+                        Title = c.String(),
                         VoteCount = c.Int(nullable: false),
                         Closed = c.Boolean(nullable: false),
                     })

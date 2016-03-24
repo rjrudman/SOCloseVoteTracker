@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -57,18 +58,24 @@
   <ItemGroup>
     <Compile Include="DataContext.cs" />
     <Compile Include="Entities\Question.cs" />
+    <Compile Include="Entities\QuestionVote.cs" />
     <Compile Include="Entities\Tag.cs" />
-    <Compile Include="Migrations\201603230537050_BasicQuestionsAndTags.cs" />
-    <Compile Include="Migrations\201603230537050_BasicQuestionsAndTags.Designer.cs">
-      <DependentUpon>201603230537050_BasicQuestionsAndTags.cs</DependentUpon>
+    <Compile Include="Entities\VoteType.cs" />
+    <Compile Include="Migrations\201603240230402_InitialSchema.cs" />
+    <Compile Include="Migrations\201603240230402_InitialSchema.Designer.cs">
+      <DependentUpon>201603240230402_InitialSchema.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201603240116122_AddMoreDetailsToQuestion.cs" />
-    <Compile Include="Migrations\201603240116122_AddMoreDetailsToQuestion.Designer.cs">
-      <DependentUpon>201603240116122_AddMoreDetailsToQuestion.cs</DependentUpon>
+    <Compile Include="Migrations\201603240307290_StoreCloseVotes.cs" />
+    <Compile Include="Migrations\201603240307290_StoreCloseVotes.Designer.cs">
+      <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201603240203191_DontStoreQuestionBody.cs" />
-    <Compile Include="Migrations\201603240203191_DontStoreQuestionBody.Designer.cs">
-      <DependentUpon>201603240203191_DontStoreQuestionBody.cs</DependentUpon>
+    <Compile Include="Migrations\201603240410050_CloseVotes.cs" />
+    <Compile Include="Migrations\201603240410050_CloseVotes.Designer.cs">
+      <DependentUpon>201603240410050_CloseVotes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.cs" />
+    <Compile Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.Designer.cs">
+      <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -78,14 +85,17 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201603230537050_BasicQuestionsAndTags.resx">
-      <DependentUpon>201603230537050_BasicQuestionsAndTags.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603240230402_InitialSchema.resx">
+      <DependentUpon>201603240230402_InitialSchema.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201603240116122_AddMoreDetailsToQuestion.resx">
-      <DependentUpon>201603240116122_AddMoreDetailsToQuestion.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603240307290_StoreCloseVotes.resx">
+      <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201603240203191_DontStoreQuestionBody.resx">
-      <DependentUpon>201603240203191_DontStoreQuestionBody.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603240410050_CloseVotes.resx">
+      <DependentUpon>201603240410050_CloseVotes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.resx">
+      <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

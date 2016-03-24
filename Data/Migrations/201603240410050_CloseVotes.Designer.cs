@@ -7,13 +7,13 @@ namespace Data.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.1.3-40302")]
-    public sealed partial class AddMoreDetailsToQuestion : IMigrationMetadata
+    public sealed partial class CloseVotes : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(AddMoreDetailsToQuestion));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(CloseVotes));
         
         string IMigrationMetadata.Id
         {
-            get { return "201603240116122_AddMoreDetailsToQuestion"; }
+            get { return "201603240410050_CloseVotes"; }
         }
         
         string IMigrationMetadata.Source

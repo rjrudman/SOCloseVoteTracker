@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -81,11 +82,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\QuestionModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StackOverflowAuthenticator.cs" />
     <Compile Include="StackOverflowConnecter.cs" />
     <Compile Include="StackOverflowResults\RecentCloseVote.cs" />
-    <Compile Include="Workers\TrackCloseVotes.cs" />
+    <Compile Include="Workers\Pollers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
