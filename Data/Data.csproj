@@ -77,6 +77,10 @@
     <Compile Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.Designer.cs">
       <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201603240501078_CheckLastUpdatedQuestionTime.cs" />
+    <Compile Include="Migrations\201603240501078_CheckLastUpdatedQuestionTime.Designer.cs">
+      <DependentUpon>201603240501078_CheckLastUpdatedQuestionTime.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -96,6 +100,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.resx">
       <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201603240501078_CheckLastUpdatedQuestionTime.resx">
+      <DependentUpon>201603240501078_CheckLastUpdatedQuestionTime.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
