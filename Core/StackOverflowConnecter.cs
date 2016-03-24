@@ -48,6 +48,11 @@ namespace Core
             }).ToList();
         }
 
+        public IList<int> GetRecentlyClosed()
+        {
+            return GetCloseVoteQueue("recentlyClosed");
+        }
+
         public IList<int> GetMostVotedCloseVotesQuestionIds()
         {
             return GetCloseVoteQueue("topClose");

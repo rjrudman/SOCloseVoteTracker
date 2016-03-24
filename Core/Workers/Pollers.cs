@@ -39,19 +39,23 @@ END
 INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETDATE())
 ";
 
+        public static void RecentlyClosed()
+        {
+            QueueQuestionQuery(new StackOverflowConnecter().GetRecentlyClosed());
+        }
+
         public static void QueryMostCloseVotes()
         {
-            var connecter = new StackOverflowConnecter();
-            var questionIds = connecter.GetMostVotedCloseVotesQuestionIds();
-
-            var now = DateTime.Now;
-            BackgroundJob.Enqueue(() => QueryQuestions(questionIds, now));
+            QueueQuestionQuery(new StackOverflowConnecter().GetMostVotedCloseVotesQuestionIds());
         }
+
         public static void QueryRecentCloseVotes()
         {
-            var connecter = new StackOverflowConnecter();
-            var questionIds = connecter.GetRecentCloseVoteQuestionIds();
+            QueueQuestionQuery(new StackOverflowConnecter().GetRecentCloseVoteQuestionIds());
+        }
 
+        private static void QueueQuestionQuery(IList<int> questionIds)
+        {
             var now = DateTime.Now;
             BackgroundJob.Enqueue(() => QueryQuestions(questionIds, now));
         }
