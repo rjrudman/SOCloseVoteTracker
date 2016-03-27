@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.Models;
-using Core.StackOverflowResults;
 using RestSharp;
 using Utils;
 
@@ -35,7 +33,7 @@ namespace Core
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 
-            var rows = parser.Result.QuerySelectorAll("table tr");
+            var rows = parser.Result.QuerySelectorAll(".summary-table tr");
             return rows.Select(r =>
             {
                 var link = r.QuerySelector("td a");

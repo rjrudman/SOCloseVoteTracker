@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Core.Models;
 using Dapper;
 using Data;
@@ -41,36 +42,40 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
         public static void RecentlyClosed()
         {
-            QueueQuestionQuery(new StackOverflowConnecter().GetRecentlyClosed());
+            QueueQuestionQueries(new StackOverflowConnecter().GetRecentlyClosed());
         }
 
         public static void QueryMostCloseVotes()
         {
-            QueueQuestionQuery(new StackOverflowConnecter().GetMostVotedCloseVotesQuestionIds());
+            QueueQuestionQueries(new StackOverflowConnecter().GetMostVotedCloseVotesQuestionIds());
         }
 
         public static void QueryRecentCloseVotes()
         {
-            QueueQuestionQuery(new StackOverflowConnecter().GetRecentCloseVoteQuestionIds());
+            QueueQuestionQueries(new StackOverflowConnecter().GetRecentCloseVoteQuestionIds());
         }
 
-        private static void QueueQuestionQuery(IList<int> questionIds)
+        private static void QueueQuestionQueries(IEnumerable<int> questionIds)
         {
             var now = DateTime.Now;
-            BackgroundJob.Enqueue(() => QueryQuestions(questionIds, now));
+            foreach(var questionId in questionIds)
+                BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
         }
 
-        public static void QueryQuestions(IEnumerable<int> questionIds, DateTime dateRequested)
+        //One at a time to not flood SO.
+        static readonly object Locker = new object();
+        public static void QueryQuestion(int questionId, DateTime dateRequested)
         {
-            var connecter = new StackOverflowConnecter();
-            foreach (var questionId in questionIds)
+            lock (Locker)
             {
+                var connecter = new StackOverflowConnecter();
                 using (var context = new DataContext())
                 {
                     var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                    if (existingQuestion != null) //It was already updated after the request was lodged, we can skip this
+                    if (existingQuestion != null)
+                        //It was already updated after the request was lodged, we can skip this
                         if (existingQuestion.LastUpdated >= dateRequested)
-                            continue;
+                            return;
                 }
                 var question = connecter.GetQuestionInformation(questionId);
                 UpsertQuestionInformation(question);
