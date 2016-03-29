@@ -62,24 +62,19 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
         }
 
-        //One at a time to not flood SO.
-        static readonly object Locker = new object();
         public static void QueryQuestion(int questionId, DateTime dateRequested)
         {
-            lock (Locker)
+            var connecter = new StackOverflowConnecter();
+            using (var context = new DataContext())
             {
-                var connecter = new StackOverflowConnecter();
-                using (var context = new DataContext())
-                {
-                    var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                    if (existingQuestion != null)
-                        //It was already updated after the request was lodged, we can skip this
-                        if (existingQuestion.LastUpdated >= dateRequested)
-                            return;
-                }
-                var question = connecter.GetQuestionInformation(questionId);
-                UpsertQuestionInformation(question);
+                var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == questionId);
+                if (existingQuestion != null)
+                    //It was already updated after the request was lodged, we can skip this
+                    if (existingQuestion.LastUpdated >= dateRequested)
+                        return;
             }
+            var question = connecter.GetQuestionInformation(questionId);
+            UpsertQuestionInformation(question);
         }
 
         private static void UpsertQuestionInformation(QuestionModel question)
