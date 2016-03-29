@@ -1,15 +1,44 @@
-﻿@using System.Configuration
-@model dynamic
-
+﻿@model dynamic
 @{
-    ViewBag.Title = "title";
     Layout = null;
 }
-@{
-    var fileLocation = ConfigurationManager.AppSettings["SettingsFileLocation"];
-    var fullPath = Path.GetFullPath(fileLocation);
 
-    var webRoot = Server.MapPath("~");
-}
-<p>@fullPath</p>
-<p>@webRoot</p>
+<html>
+<head>
+    <title>SOClose Vote Tracker</title>
+    <link rel="stylesheet" href="//cdn.datatables.net/1.10.11/css/jquery.dataTables.min.css"/>
+
+    <table id="grid" class="display">
+        <thead>
+            <tr>
+                <th>Column 1</th>
+                <th>Column 2</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Row 1 Data 1</td>
+                <td>Row 1 Data 2</td>
+            </tr>
+            <tr>
+                <td>Row 2 Data 1</td>
+                <td>Row 2 Data 2</td>
+            </tr>
+        </tbody>
+    </table>
+
+</head>
+<body>
+
+    <script type="text/javascript" src="//code.jquery.com/jquery-2.2.2.min.js"></script>
+    <script type="text/javascript" src="//cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#grid').DataTable({
+                ajax: '/Question/GetQuestionInformation',
+                "serverSide": true
+            });
+        });
+    </script>
+</body>
+</html>

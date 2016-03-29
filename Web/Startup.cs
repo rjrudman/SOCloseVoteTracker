@@ -24,13 +24,13 @@ namespace Web
             
             GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
-            RecurringJob.AddOrUpdate(() => Pollers.RecentlyClosed(), "*/5 * * * *"); //Every 5 minutes
-            RecurringJob.AddOrUpdate(() => Pollers.QueryRecentCloseVotes(), "*/5 * * * *"); //Every 5 minutes
-            RecurringJob.AddOrUpdate(() => Pollers.QueryMostCloseVotes(), "*/5 * * * *"); //Every 5 minutes
+            //RecurringJob.AddOrUpdate(() => Pollers.RecentlyClosed(), "*/5 * * * *"); //Every 5 minutes
+            //RecurringJob.AddOrUpdate(() => Pollers.QueryRecentCloseVotes(), "*/5 * * * *"); //Every 5 minutes
+            //RecurringJob.AddOrUpdate(() => Pollers.QueryMostCloseVotes(), "*/5 * * * *"); //Every 5 minutes
 
-            app.UseErrorPage();
+            //app.UseErrorPage();
 
-            app.UseHangfireServer();
+            //app.UseHangfireServer();
             var options = new DashboardOptions
             {
                 AppPath = VirtualPathUtility.ToAbsolute("~"),
