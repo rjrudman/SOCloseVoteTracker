@@ -1,0 +1,15 @@
+﻿@using System.Configuration
+@model dynamic
+
+@{
+    ViewBag.Title = "title";
+    Layout = null;
+}
+@{
+    var fileLocation = ConfigurationManager.AppSettings["SettingsFileLocation"];
+    var fullPath = Path.GetFullPath(fileLocation);
+
+    var webRoot = Server.MapPath("~");
+}
+<p>@fullPath</p>
+<p>@webRoot</p>

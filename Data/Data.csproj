@@ -61,12 +61,21 @@
     <Compile Include="Entities\QuestionVote.cs" />
     <Compile Include="Entities\Tag.cs" />
     <Compile Include="Entities\VoteType.cs" />
+    <Compile Include="Migrations\201603270714275_InitialSchema.cs" />
+    <Compile Include="Migrations\201603270714275_InitialSchema.Designer.cs">
+      <DependentUpon>201603270714275_InitialSchema.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201603270714275_InitialSchema.resx">
+      <DependentUpon>201603270714275_InitialSchema.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
