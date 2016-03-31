@@ -6,7 +6,6 @@
 <html>
 <head>
     <title>SOClose Vote Tracker</title>
-    <link rel="stylesheet" href="//cdn.datatables.net/1.10.11/css/jquery.dataTables.min.css"/>
 
     <table id="grid" class="display">
         <thead>
@@ -29,16 +28,5 @@
 
 </head>
 <body>
-
-    <script type="text/javascript" src="//code.jquery.com/jquery-2.2.2.min.js"></script>
-    <script type="text/javascript" src="//cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript">
-        $(function() {
-            $('#grid').DataTable({
-                ajax: '/Question/GetQuestionInformation',
-                "serverSide": true
-            });
-        });
-    </script>
 </body>
 </html>

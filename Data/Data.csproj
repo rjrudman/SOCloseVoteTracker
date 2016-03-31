@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataContext.cs" />
+    <Compile Include="Entities\CVPlsRequest.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\QuestionVote.cs" />
     <Compile Include="Entities\Tag.cs" />
