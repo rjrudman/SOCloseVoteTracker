@@ -26,10 +26,8 @@ namespace SOCloseVoteTracker
                 }
             });
             thread.Start();
-
-
-            Console.ReadLine();
-
+            
+            
         }
 
     }

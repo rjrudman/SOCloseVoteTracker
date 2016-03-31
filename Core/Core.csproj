@@ -36,8 +36,8 @@
       <HintPath>..\packages\AngleSharp.0.3.1\lib\portable-win+net45+wp80\AngleSharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ChatExchange.Net, Version=5.0.0.2, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ChatExchange.Net.5.0.2-beta\lib\ChatExchange.Net.dll</HintPath>
+    <Reference Include="ChatExchange.Net, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ChatExchange.Net.5.0.0-beta\lib\ChatExchange.Net.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="CsQuery, Version=1.3.3.249, Culture=neutral, processorArchitecture=MSIL">
@@ -100,6 +100,8 @@
   <ItemGroup>
     <Compile Include="Models\QuestionModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RestRequests\RestRequestThrottler.cs" />
+    <Compile Include="RestRequests\TimeSpanSemaphore.cs" />
     <Compile Include="StackOverflowAuthenticator.cs" />
     <Compile Include="StackOverflowConnecter.cs" />
     <Compile Include="StackOverflowResults\RecentCloseVote.cs" />

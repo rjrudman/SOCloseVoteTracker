@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.Models;
+using Core.RestRequests;
 using RestSharp;
 using Utils;
 
@@ -18,18 +19,16 @@ namespace Core
 
         private IList<int> GetCloseVoteQueue(string mode)
         {
-            var restClient = new RestClient(SITE_URL);
+            var throttler = new RestRequestThrottler(SITE_URL, "tools", Method.GET, _authenticator);
 
-            var restRequest = new RestRequest("tools", Method.GET);
-            _authenticator.AuthenticateRequest(restRequest);
+            throttler.Request.AddHeader("X-Requested-With", "XMLHttpRequest");
 
-            restRequest.AddHeader("X-Requested-With", "XMLHttpRequest");
+            throttler.Request.AddParameter("tab", "close");
+            throttler.Request.AddParameter("daterange", "today");
+            throttler.Request.AddParameter("mode", mode);
 
-            restRequest.AddParameter("tab", "close");
-            restRequest.AddParameter("daterange", "today");
-            restRequest.AddParameter("mode", mode);
+            var response = throttler.Execute();
 
-            var response = restClient.Execute(restRequest);
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 
@@ -63,12 +62,9 @@ namespace Core
 
         public QuestionModel GetQuestionInformation(int questionId)
         {
-            var restClient = new RestClient(SITE_URL);
-
-            var restRequest = new RestRequest($"questions/{questionId}", Method.GET);
-            _authenticator.AuthenticateRequest(restRequest);
+            var throttler = new RestRequestThrottler(SITE_URL, $"questions/{questionId}", Method.GET, _authenticator);
             
-            var response = restClient.Execute(restRequest);
+            var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 
@@ -93,12 +89,9 @@ namespace Core
         //TODO: Tidy this logic up a bit (a central area mapping top-level close reason to an ID would be nice).
         private Dictionary<int, int> GetCloseVotes(int questionId)
         {
-            var restClient = new RestClient(SITE_URL);
-
-            var restRequest = new RestRequest($"flags/questions/{questionId}/close/popup", Method.GET);
-            _authenticator.AuthenticateRequest(restRequest);
-
-            var response = restClient.Execute(restRequest);
+            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator);
+            
+            var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 

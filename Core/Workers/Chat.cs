@@ -14,15 +14,15 @@ namespace Core.Workers
 INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@UserId, @QuestionId, @FullMessage, GETUTCDATE())
 ";
 
-        private static Client chatClient;
-        private static Room chatRoom;
+        private static Client _chatClient;
+        private static Room _chatRoom;
         private static readonly Regex QuestionIdRegex = new Regex("\\/(q(uestions)?|p(osts)?)\\/(?<questionID>\\d+)\\/.*");
 
         public static void JoinAndWatchRoom(string roomURL)
         {
-            chatClient = new Client(Configuration.UserName, Configuration.Password, Configuration.ProxyUrl, Configuration.ProxyUsername, Configuration.ProxyPassword);
-            chatRoom = chatClient.JoinRoom(roomURL);
-            chatRoom.EventManager.IgnoreOwnEvents = false;
+            _chatClient = new Client(Configuration.UserName, Configuration.Password, Configuration.ProxyUrl, Configuration.ProxyUsername, Configuration.ProxyPassword);
+            _chatRoom = _chatClient.JoinRoom(roomURL);
+            _chatRoom.EventManager.IgnoreOwnEvents = false;
 
             var processMessage = new Action<Message>(message =>
             {
@@ -43,8 +43,8 @@ INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@U
                 }
             });
 
-            chatRoom.EventManager.ConnectListener(EventType.MessagePosted, processMessage);
-            chatRoom.EventManager.ConnectListener(EventType.MessageEdited, processMessage);
+            _chatRoom.EventManager.ConnectListener(EventType.MessagePosted, processMessage);
+            _chatRoom.EventManager.ConnectListener(EventType.MessageEdited, processMessage);
         }
 
         public static void QueryQuestionAndLogRequest(int userId, int questionId, string fullMessage, DateTime requestTime)
