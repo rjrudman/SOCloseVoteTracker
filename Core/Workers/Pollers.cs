@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using Core.Models;
 using Dapper;
 using Data;
+using Data.Migrations;
 using Hangfire;
 
 namespace Core.Workers
@@ -38,6 +40,22 @@ END
         const string INSERT_QUESTION_VOTE_SQL = @"
 INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETUTCDATE())
 ";
+
+        public static void Start()
+        {
+            Database.SetInitializer(new MigrateDatabaseToLatestVersion<DataContext, Configuration>());
+            using (var c = new DataContext())
+                c.Database.Initialize(true);
+
+            GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
+
+            //Every 5 minutes staggered.
+            RecurringJob.AddOrUpdate(() => RecentlyClosed(), "0,5,10,15,20,25,30,35,40,45,50,55 * * * *");
+            RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "2,7,12,17,22,27,32,37,42,47,52,57 * * * *");
+            RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "4,9,14,19,24,29,34,39,44,49,54,59 * * * *");
+
+            Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+        }
 
         public static void RecentlyClosed()
         {
