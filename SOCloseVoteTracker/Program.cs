@@ -13,6 +13,8 @@ namespace SOCloseVoteTracker
         {
             GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
+            Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+
             RecurringJob.AddOrUpdate(() => Pollers.RecentlyClosed(), "*/5 * * * *"); //Every 5 minutes
             RecurringJob.AddOrUpdate(() => Pollers.QueryRecentCloseVotes(), "*/5 * * * *"); //Every 5 minutes
             RecurringJob.AddOrUpdate(() => Pollers.QueryMostCloseVotes(), "*/5 * * * *"); //Every 5 minutes

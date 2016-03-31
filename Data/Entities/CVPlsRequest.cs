@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Data.Entities
@@ -13,5 +14,9 @@ namespace Data.Entities
         [ForeignKey("QuestionId")]
         public virtual Question Question { get; set; }
         public int QuestionId { get; set; }
+
+        public string FullMessage { get; set; }
+
+        public DateTime CreatedAt { get; set; }
     }
 }
