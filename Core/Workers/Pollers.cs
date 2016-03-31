@@ -77,6 +77,11 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             }
         }
 
+        public static void CheckCloseVoteDetails(int questionId)
+        {
+            
+        }
+
         public static void RecentlyClosed()
         {
             QueueQuestionQueries(new StackOverflowConnecter().GetRecentlyClosed());
@@ -118,16 +123,16 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         {
             using (var context = new DataContext())
             {
-                var existingVotes = context.Questions
-                    .Where(q => q.Id == question.Id)
-                    .SelectMany(q => q.QuestionVotes)
-                    .GroupBy(ev => ev.VoteTypeId)
-                    .ToDictionary(g => g.Key, g => g.Count());
-
                 var connection = context.Database.Connection;
                 connection.Open();
                 using (var trans = connection.BeginTransaction())
                 {
+                    var existingVotes = context.Questions
+                    .Where(q => q.Id == question.Id)
+                    .SelectMany(q => q.QuestionVotes)
+                    .GroupBy(ev => ev.VoteTypeId)
+                    .ToDictionary(g => g.Key, g => g.Count());
+                    
                     connection.Execute(UPSERT_QUESTION_SQL, question, trans);
                     foreach (var tag in question.Tags)
                     {

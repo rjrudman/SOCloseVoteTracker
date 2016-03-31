@@ -11,13 +11,15 @@ namespace Core.RestRequests
         private const int TIMESPAN_PER_REQUEST = 1; //One second
 
         private readonly StackOverflowAuthenticator _authenticator;
+        private readonly TimeSpanSemaphore _specificThrottle;
         public readonly RestClient Client;
         public readonly RestRequest Request;
-        private static readonly TimeSpanSemaphore _semaphore = new TimeSpanSemaphore(MAX_CONCURRENT_REQUESTS, TimeSpan.FromSeconds(TIMESPAN_PER_REQUEST));
+        private static readonly TimeSpanSemaphore _globalThrottle = new TimeSpanSemaphore(MAX_CONCURRENT_REQUESTS, TimeSpan.FromSeconds(TIMESPAN_PER_REQUEST));
 
-        public RestRequestThrottler(string baseURL, string resource, Method method, StackOverflowAuthenticator authenticator = null)
+        public RestRequestThrottler(string baseURL, string resource, Method method, StackOverflowAuthenticator authenticator = null, TimeSpanSemaphore specificThrottle = null)
         {
             _authenticator = authenticator;
+            _specificThrottle = specificThrottle;
 
             Client = new RestClient(baseURL);
             Request = new RestRequest(resource, method);
@@ -28,9 +30,12 @@ namespace Core.RestRequests
             _authenticator?.AuthenticateRequest(Request);
 
             IRestResponse response = null;
-            _semaphore.Run(() =>
+            _globalThrottle.Run(() =>
             {
-                response = Client.Execute(Request);
+                if (_specificThrottle != null)
+                    _specificThrottle.Run(() => { response = Client.Execute(Request); }, new CancellationToken());
+                else
+                    response = Client.Execute(Request);
             }, new CancellationToken());
 
             return response;

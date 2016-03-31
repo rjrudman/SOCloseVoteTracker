@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.Models;
 using Core.RestRequests;
+using Data;
 using RestSharp;
 using Utils;
 
@@ -72,9 +74,25 @@ namespace Core
             var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
             var isClosed = parser.Result.QuerySelectorAll(".question-status").Any();
 
-            var votes = isClosed 
-                ? new Dictionary<int, int>() : 
-                GetCloseVotes(questionId);
+            var numCloseVotes = 0;
+            var existingFlagCount = parser.Result.QuerySelector(".existing-flag-count");
+            if (!string.IsNullOrWhiteSpace(existingFlagCount?.TextContent))
+                numCloseVotes = int.Parse(existingFlagCount.TextContent);
+
+            var requireCloseVoteDetails = false;
+            if (!isClosed && numCloseVotes > 0)
+            {
+                using (var context = new DataContext())
+                {
+                    var question = context.Questions.FirstOrDefault(q => q.Id == questionId);
+                    if (question != null && question.QuestionVotes.Count != numCloseVotes)
+                        requireCloseVoteDetails = true;
+                }
+            }
+
+            var votes = requireCloseVoteDetails
+                ? GetCloseVotes(questionId)
+                : new Dictionary<int, int>();
             
             return new QuestionModel
             {
@@ -86,10 +104,11 @@ namespace Core
             };
         }
 
-        //TODO: Tidy this logic up a bit (a central area mapping top-level close reason to an ID would be nice).
+        //One request every 3.5 seconds.
+        private static TimeSpanSemaphore _closeVotePopupThrottle = new TimeSpanSemaphore(1, TimeSpan.FromSeconds(3.5));
         private Dictionary<int, int> GetCloseVotes(int questionId)
         {
-            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator);
+            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator, _closeVotePopupThrottle);
             
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
