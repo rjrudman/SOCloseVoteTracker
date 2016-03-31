@@ -49,9 +49,11 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
-            //Every 5 minutes staggered.
-            RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
-            
+            //Every 5 minutes
+            RecurringJob.AddOrUpdate(() => Pollers.RecentlyClosed(), "*/5 * * * *");
+            RecurringJob.AddOrUpdate(() => Pollers.QueryRecentCloseVotes(), "*/5 * * * *");
+            RecurringJob.AddOrUpdate(() => Pollers.QueryMostCloseVotes(), "*/5 * * * *");
+
             Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
         }
 
