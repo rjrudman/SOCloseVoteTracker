@@ -14,12 +14,12 @@ namespace Core.Workers
         const string UPSERT_QUESTION_SQL = @"
 IF NOT EXISTS (SELECT NULL FROM Questions WHERE Id = @Id)
 BEGIN
-    INSERT INTO Questions(Id, Closed, Title, LastUpdated) VALUES (@Id, @Closed, @Title, GETDATE())
+    INSERT INTO Questions(Id, Closed, Title, LastUpdated) VALUES (@Id, @Closed, @Title, GETUTCDATE())
 END
 ELSE
 BEGIN
     UPDATE Questions
-    SET Closed = @Closed, Title = @Title, LastUpdated = GETDATE()
+    SET Closed = @Closed, Title = @Title, LastUpdated = GETUTCDATE()
     WHERE Id = @Id
 END
 ";
@@ -37,7 +37,7 @@ END
 ";
 
         const string INSERT_QUESTION_VOTE_SQL = @"
-INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETDATE())
+INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETUTCDATE())
 ";
 
         public static void RecentlyClosed()

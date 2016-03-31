@@ -108,25 +108,25 @@ namespace Core
 
             foreach (var closeVoteTag in closeVoteTags)
             {
-                var topLevelCloseReasonNode = closeVoteTag.ParentElement.QuerySelector("input[name=\"close-reason\"]");
+                var topLevelCloseReasonNode = closeVoteTag.ParentElement.QuerySelector("#pane-main span.action-name");
                 int closeVoteTypeId;
                 if (topLevelCloseReasonNode != null)
                 {
-                    var topLevelCloseReason = topLevelCloseReasonNode.GetAttribute("value");
+                    var topLevelCloseReason = topLevelCloseReasonNode.TextContent;
                     switch (topLevelCloseReason)
                     {
-                        case "Duplicate":
+                        case "duplicate of...":
                             closeVoteTypeId = 1000;
                             break;
-                        case "OffTopic":
+                        case "off-topic because...":
                             continue;
-                        case "Unclear":
+                        case "unclear what you're asking":
                             closeVoteTypeId = 1001;
                             break;
-                        case "TooBroad":
+                        case "too broad":
                             closeVoteTypeId = 1002;
                             break;
-                        case "OpinionBased":
+                        case "primarily opinion-based":
                             closeVoteTypeId = 1003;
                             break;
                         default:
