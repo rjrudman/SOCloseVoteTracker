@@ -18,17 +18,17 @@ namespace Web
         {
             ConfigureAuth(app);
             
+            Pollers.Start();
+
             app.UseErrorPage();
             app.UseHangfireServer();
 
             var options = new DashboardOptions
             {
                 AppPath = VirtualPathUtility.ToAbsolute("~"),
-                AuthorizationFilters = new[] {new RemoveAuthorizationFilter()}
+                AuthorizationFilters = new[] { new RemoveAuthorizationFilter() }
             };
             app.UseHangfireDashboard("/hangfire", options);
-
-            Pollers.Start();
         }
 
         public class RemoveAuthorizationFilter : IAuthorizationFilter

@@ -50,11 +50,31 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
             //Every 5 minutes
-            RecurringJob.AddOrUpdate(() => Pollers.RecentlyClosed(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => Pollers.QueryRecentCloseVotes(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => Pollers.QueryMostCloseVotes(), "*/5 * * * *");
+            RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
+            RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "*/5 * * * *");
+            RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "*/5 * * * *");
 
+            //Every hour
+            RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
+            
             Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+        }
+
+        public static void CheckCVPls()
+        {
+            using (var ctx = new DataContext())
+            {
+                var weekAgo = DateTime.Now.ToUniversalTime().AddDays(-7);
+                var questionIdsToCheck =
+                    ctx.CVPlsRequests
+                        .Where(r => !r.Question.Closed && r.CreatedAt >= weekAgo)
+                        .Select(r => r.QuestionId)
+                        .ToList();
+
+                var now = DateTime.Now;
+                foreach (var questionId in questionIdsToCheck)
+                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
+            }
         }
 
         public static void RecentlyClosed()
