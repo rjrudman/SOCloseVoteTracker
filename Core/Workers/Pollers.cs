@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Core.Models;
 using Dapper;
 using Data;
@@ -69,8 +68,8 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             {
                 var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == questionId);
                 if (existingQuestion != null)
-                    //It was already updated after the request was lodged, we can skip this
-                    if (existingQuestion.LastUpdated >= dateRequested)
+                    //It was already updated after the request was lodged, we can skip this. 1 minute leeway
+                    if (existingQuestion.LastUpdated >= dateRequested.AddMinutes(1))
                         return;
             }
             var question = connecter.GetQuestionInformation(questionId);
