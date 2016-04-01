@@ -14,7 +14,7 @@ namespace Core.Workers
     public static class Pollers
     {
         const string UPSERT_QUESTION_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM Questions WHERE Id = @Id)
+IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @Id)
 BEGIN
     INSERT INTO Questions(Id, Closed, Title, LastUpdated) VALUES (@Id, @Closed, @Title, GETUTCDATE())
 END
@@ -26,13 +26,13 @@ BEGIN
 END
 ";
         const string UPSERT_TAG_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM Tags WHERE TagName = @tagName)
+IF NOT EXISTS (SELECT NULL FROM Tags with (XLOCK, ROWLOCK) WHERE TagName = @tagName)
 BEGIN
     INSERT INTO Tags(TagName) VALUES (@tagName)
 END
 ";
         const string UPSERT_QUESTION_TAG_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM QuestionTags WHERE QuestionID = @questionID AND TagId = @tagName)
+IF NOT EXISTS (SELECT NULL FROM QuestionTags with (XLOCK, ROWLOCK) WHERE QuestionID = @questionID AND TagId = @tagName)
 BEGIN
     INSERT INTO QuestionTags(QuestionID, TagId) VALUES (@questionID, @tagName)
 END

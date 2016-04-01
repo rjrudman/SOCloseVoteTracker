@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading;
+using Dapper;
+using Data;
 using RestSharp;
 
 namespace Core.RestRequests
@@ -33,12 +35,28 @@ namespace Core.RestRequests
             _globalThrottle.Run(() =>
             {
                 if (_specificThrottle != null)
-                    _specificThrottle.Run(() => { response = Client.Execute(Request); }, new CancellationToken());
+                    _specificThrottle.Run(() =>
+                    {
+                        response = Client.Execute(Request);
+                        LogRequest();
+                    }, new CancellationToken());
                 else
+                {
                     response = Client.Execute(Request);
+                    LogRequest();
+                }
             }, new CancellationToken());
 
             return response;
+        }
+
+        private void LogRequest()
+        {
+            using (var con = DataContext.PlainConnection())
+            {
+                con.Open();
+                con.Execute("INSERT INTO WebRequests (DateExecuted) VALUES (GETUTCDATE())");
+            }
         }
     }
 }

@@ -62,6 +62,7 @@
     <Compile Include="Entities\QuestionVote.cs" />
     <Compile Include="Entities\Tag.cs" />
     <Compile Include="Entities\VoteType.cs" />
+    <Compile Include="Entities\WebRequest.cs" />
     <Compile Include="Migrations\201603270714275_InitialSchema.cs" />
     <Compile Include="Migrations\201603270714275_InitialSchema.Designer.cs">
       <DependentUpon>201603270714275_InitialSchema.cs</DependentUpon>
@@ -81,6 +82,10 @@
     <Compile Include="Migrations\201603310502123_MoveDatesToUTC.cs" />
     <Compile Include="Migrations\201603310502123_MoveDatesToUTC.Designer.cs">
       <DependentUpon>201603310502123_MoveDatesToUTC.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604010401366_TrackWebRequests.cs" />
+    <Compile Include="Migrations\201604010401366_TrackWebRequests.Designer.cs">
+      <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -104,6 +109,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201603310502123_MoveDatesToUTC.resx">
       <DependentUpon>201603310502123_MoveDatesToUTC.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604010401366_TrackWebRequests.resx">
+      <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
