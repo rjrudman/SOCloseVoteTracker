@@ -102,6 +102,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RestRequests\RestRequestThrottler.cs" />
     <Compile Include="RestRequests\TimeSpanSemaphore.cs" />
+    <Compile Include="Sockets\ActiveQuestionSocket.cs" />
+    <Compile Include="Sockets\BaseSESocket.cs" />
+    <Compile Include="Sockets\ExchangeSite.cs" />
     <Compile Include="StackOverflowAuthenticator.cs" />
     <Compile Include="StackOverflowConnecter.cs" />
     <Compile Include="StackOverflowResults\RecentCloseVote.cs" />

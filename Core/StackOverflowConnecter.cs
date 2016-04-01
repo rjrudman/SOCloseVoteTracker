@@ -47,9 +47,9 @@ namespace Core
             }).ToList();
         }
 
-        public IList<int> GetFrontPage()
+        public IList<int> GetRecentCloseVoteReviews()
         {
-            var throttler = new RestRequestThrottler(SITE_URL, string.Empty, Method.GET, _authenticator);
+            var throttler = new RestRequestThrottler(SITE_URL, "review/close/history", Method.GET, _authenticator);
 
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
@@ -64,11 +64,11 @@ namespace Core
                     if (int.TryParse(text, out id))
                         return id;
                 }
-                return (int?)null;
+                return (int?) null;
             })
-            .Where(r => r.HasValue)
-            .Select(r => r.Value)
-            .ToList();
+                .Where(r => r.HasValue)
+                .Select(r => r.Value)
+                .ToList();
         }
 
         public IList<int> GetRecentlyClosed()

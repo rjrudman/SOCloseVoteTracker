@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using Core.Models;
+using Core.Sockets;
 using Dapper;
 using Data;
 using Data.Migrations;
@@ -53,11 +54,12 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
             RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "*/5 * * * *");
             RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => GetFrontPage(), "*/2 * * * *");
-            
+            RecurringJob.AddOrUpdate(() => GetRecentCloseVoteReviews(), "*/5 * * * *");
             //Every hour
             RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
-            
+
+            PollFrontPage();
+
             Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
         }
 
@@ -77,10 +79,18 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
             }
         }
-        
-        public static void GetFrontPage()
+
+        public static void GetRecentCloseVoteReviews()
         {
-            QueueQuestionQueries(new StackOverflowConnecter().GetFrontPage());
+            QueueQuestionQueries(new StackOverflowConnecter().GetRecentCloseVoteReviews());
+        }
+
+        public static void PollFrontPage()
+        {
+            ActiveQuestionsPoller.Register(question =>
+            {
+                BackgroundJob.Schedule(() => QueryQuestion((int)question.ID, DateTime.Now),TimeSpan.FromMinutes(10));
+            });
         }
 
         public static void RecentlyClosed()
@@ -180,7 +190,9 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     }
                     else
                     {
-                        if (existingQuestion == null || (existingQuestion.LastUpdated - DateTime.Now) <= TimeSpan.FromHours(23))
+                        if (existingQuestion == null)
+                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromMinutes(10));
+                        else if ((existingQuestion.LastUpdated - DateTime.Now) <= TimeSpan.FromHours(23))
                             BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(15));
                     }
 
