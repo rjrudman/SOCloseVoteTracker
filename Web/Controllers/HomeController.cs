@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using System.Net;
 using System.Web.Mvc;
 using Core.Workers;
 using Hangfire;
-using WebGrease.Css.Ast.Selectors;
 
 namespace Web.Controllers
 {
@@ -17,10 +15,12 @@ namespace Web.Controllers
             return View();
         }
 
-        public ActionResult Poll(int questionId)
+        public ActionResult Poll(IList<int> questionIds)
         {
-            BackgroundJob.Enqueue(() => Pollers.QueryQuestion(questionId, DateTime.Now));
-            return new EmptyResult();
+            foreach(var questionId in questionIds)
+                BackgroundJob.Enqueue(() => Pollers.QueryQuestion(questionId, DateTime.Now));
+
+            return new HttpStatusCodeResult(HttpStatusCode.OK);
         }
     }
 }

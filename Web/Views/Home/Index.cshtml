@@ -6,27 +6,23 @@
 <html>
 <head>
     <title>SOClose Vote Tracker</title>
-
-    <table id="grid" class="display">
-        <thead>
-            <tr>
-                <th>Column 1</th>
-                <th>Column 2</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Row 1 Data 1</td>
-                <td>Row 1 Data 2</td>
-            </tr>
-            <tr>
-                <td>Row 2 Data 1</td>
-                <td>Row 2 Data 2</td>
-            </tr>
-        </tbody>
-    </table>
-
+    
 </head>
 <body>
+    <input id="questionIdInput" type="text" />
+    <a id="btnSubmit" href="javascript:void(0);">Submit</a>
+
+    <script src="https://code.jquery.com/jquery-2.2.2.min.js" integrity="sha256-36cp2Co+/62rEAAYHLmRCPIych47CvdM+uTBJwSzWjI=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+    $(function() {
+        $('#btnSubmit').click(function() {
+            var questionIdStr = $('#questionIdInput').val();
+            var questionIds = questionIdStr.split(",");
+            $.post('/Home/Poll', { questionIds: questionIds }, function() {
+                location.reload();
+            });
+        });
+    });
+</script>
 </body>
 </html>

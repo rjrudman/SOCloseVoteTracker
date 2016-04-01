@@ -47,6 +47,30 @@ namespace Core
             }).ToList();
         }
 
+        public IList<int> GetFrontPage()
+        {
+            var throttler = new RestRequestThrottler(SITE_URL, string.Empty, Method.GET, _authenticator);
+
+            var response = throttler.Execute();
+            var parser = new HtmlParser(response.Content);
+
+            var rows = parser.Result.QuerySelectorAll(".question-hyperlink");
+            return rows.Select(r =>
+            {
+                var text = r.TextContent;
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    int id;
+                    if (int.TryParse(text, out id))
+                        return id;
+                }
+                return (int?)null;
+            })
+            .Where(r => r.HasValue)
+            .Select(r => r.Value)
+            .ToList();
+        }
+
         public IList<int> GetRecentlyClosed()
         {
             return GetCloseVoteQueue("recentlyClosed");
@@ -105,10 +129,10 @@ namespace Core
         }
 
         //One request every 3.5 seconds.
-        private static TimeSpanSemaphore _closeVotePopupThrottle = new TimeSpanSemaphore(1, TimeSpan.FromSeconds(3.5));
+        private static readonly TimeSpanSemaphore CloseVotePopupThrottle = new TimeSpanSemaphore(1, TimeSpan.FromSeconds(3.5));
         private Dictionary<int, int> GetCloseVotes(int questionId)
         {
-            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator, _closeVotePopupThrottle);
+            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator, CloseVotePopupThrottle);
             
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
