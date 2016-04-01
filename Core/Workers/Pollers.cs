@@ -176,25 +176,23 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                             newCloseVotesFound = true;
                         }
                     }
-                    if (newCloseVotesFound)
-                    {
-                        if (existingQuestion != null)
-                        {
-                            var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
-                            if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
-                                BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(1));
-                            else if (timeSinceLastUpdated < TimeSpan.FromHours(4))
-                                BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(5));
-                            else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
-                                BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(24));
-                        }
-                    }
+
+                    //New activity
+                    if (newCloseVotesFound || existingQuestion == null)
+                        BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromMinutes(15));
                     else
                     {
-                        if (existingQuestion == null)
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromMinutes(10));
-                        else if ((existingQuestion.LastUpdated - DateTime.Now) <= TimeSpan.FromHours(23))
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(15));
+                        //No new activity. Keep checking it less and less often, after about a day it will fall off the queue if no new close votes are found.
+
+                        var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
+                        if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
+                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(1));
+                        else if (timeSinceLastUpdated < TimeSpan.FromHours(1))
+                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(2));
+                        else if (timeSinceLastUpdated < TimeSpan.FromHours(2))
+                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(3));
+                        else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
+                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(24));
                     }
 
                     trans.Commit();
