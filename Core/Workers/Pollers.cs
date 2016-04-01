@@ -127,6 +127,8 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 connection.Open();
                 using (var trans = connection.BeginTransaction())
                 {
+                    context.Database.UseTransaction(trans);
+
                     var existingVotes = context.Questions
                     .Where(q => q.Id == question.Id)
                     .SelectMany(q => q.QuestionVotes)
