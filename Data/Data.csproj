@@ -87,6 +87,10 @@
     <Compile Include="Migrations\201604010401366_TrackWebRequests.Designer.cs">
       <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604011140557_FlagQuestionsAsBeingQueued.cs" />
+    <Compile Include="Migrations\201604011140557_FlagQuestionsAsBeingQueued.Designer.cs">
+      <DependentUpon>201604011140557_FlagQuestionsAsBeingQueued.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -112,6 +116,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604010401366_TrackWebRequests.resx">
       <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604011140557_FlagQuestionsAsBeingQueued.resx">
+      <DependentUpon>201604011140557_FlagQuestionsAsBeingQueued.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

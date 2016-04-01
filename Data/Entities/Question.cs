@@ -24,6 +24,8 @@ namespace Data.Entities
 
         public DateTime LastUpdated { get; set; }
 
+        public bool IsQueued { get; set; }
+
         public virtual IList<Tag> Tags { get; set; }
 
         [InverseProperty("Question")]

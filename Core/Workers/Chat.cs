@@ -49,7 +49,7 @@ INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@U
 
         public static void QueryQuestionAndLogRequest(int userId, int questionId, string fullMessage, DateTime requestTime)
         {
-            Pollers.QueryQuestion(questionId, requestTime);
+            Pollers.QueueQuestionQuery(questionId);
 
             using (var connection = DataContext.PlainConnection())
             {
@@ -58,8 +58,7 @@ INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@U
             }
 
             //Check on the question again in an hour
-            var delay = TimeSpan.FromHours(1);
-            BackgroundJob.Schedule(() => Pollers.QueryQuestion(questionId, DateTime.Now.Add(delay)), delay);
+            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromHours(1));
         }
     }
 }

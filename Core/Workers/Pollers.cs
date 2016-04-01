@@ -76,7 +76,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
                 var now = DateTime.Now;
                 foreach (var questionId in questionIdsToCheck)
-                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
+                    QueueQuestionQuery(questionId);
             }
         }
 
@@ -89,7 +89,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         {
             ActiveQuestionsPoller.Register(question =>
             {
-                BackgroundJob.Schedule(() => QueryQuestion((int)question.ID, DateTime.Now),TimeSpan.FromMinutes(10));
+                QueueQuestionQuery((int) question.ID, TimeSpan.FromMinutes(15));
             });
         }
 
@@ -112,27 +112,35 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         {
             var now = DateTime.Now;
             foreach(var questionId in questionIds)
-                BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
+                QueueQuestionQuery(questionId);
+        }
+
+        public static void QueueQuestionQuery(int questionId, TimeSpan? after = null)
+        {
+            using (var con = DataContext.PlainConnection())
+            {
+                using (var trans = con.BeginTransaction())
+                {
+                    var alreadyQueued = con.Query<bool>("SELECT IsQueued FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @id", new {id = questionId}, trans).FirstOrDefault();
+                    if (alreadyQueued)
+                        return;
+
+                    con.Execute("UPDATE Questions SET IsQueued = 1 WHERE Id = @id", new {id = questionId}, trans);
+
+                    if (after == null)
+                        BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now));
+                    else
+                        BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), after.Value);
+                }
+            }
         }
 
         public static void QueryQuestion(int questionId, DateTime dateRequested)
         {
             var connecter = new StackOverflowConnecter();
-            using (var context = new DataContext())
-            {
-                var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                if (existingQuestion != null)
-                {
-                    //If it was updated after the request, or the latest modification was less than 5 minutes ago, we requeue it for later
-                    if (existingQuestion.LastUpdated >= dateRequested
-                        || (existingQuestion.LastUpdated - DateTime.Now < TimeSpan.FromMinutes(5)))
-                    {
-                        //Requeue it for an hour
-                        BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), TimeSpan.FromHours(1));
-                    }
-                }
-                    
-            }
+            using (var con = DataContext.PlainConnection())
+                con.Execute("UPDATE Questions SET IsQueued = 0 WHERE Id = @id", new { id = questionId });                    
+            
             var question = connecter.GetQuestionInformation(questionId);
             if (question != null)
                 UpsertQuestionInformation(question);
@@ -179,20 +187,20 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
                     //New activity
                     if (newCloseVotesFound || existingQuestion == null)
-                        BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromMinutes(15));
+                        QueueQuestionQuery(question.Id, TimeSpan.FromMinutes(15));
                     else
                     {
                         //No new activity. Keep checking it less and less often, after about a day it will fall off the queue if no new close votes are found.
 
                         var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
                         if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(1));
+                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(1));
                         else if (timeSinceLastUpdated < TimeSpan.FromHours(1))
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(2));
+                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(2));
                         else if (timeSinceLastUpdated < TimeSpan.FromHours(2))
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(3));
+                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(3));
                         else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(24));
+                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(24));
                     }
 
                     trans.Commit();
