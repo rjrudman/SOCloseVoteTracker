@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.Models;
@@ -92,6 +93,9 @@ namespace Core
             
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
+            if (response.StatusCode != HttpStatusCode.OK)
+                return null;
+
             parser.Parse();
 
             var tags = parser.Result.QuerySelectorAll(".post-taglist .post-tag").Select(t => t.TextContent);

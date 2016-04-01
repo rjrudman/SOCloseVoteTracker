@@ -134,7 +134,8 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     
             }
             var question = connecter.GetQuestionInformation(questionId);
-            UpsertQuestionInformation(question);
+            if (question != null)
+                UpsertQuestionInformation(question);
         }
 
         private static void UpsertQuestionInformation(QuestionModel question)
