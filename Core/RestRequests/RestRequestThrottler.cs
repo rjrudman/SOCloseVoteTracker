@@ -53,10 +53,7 @@ namespace Core.RestRequests
         private void LogRequest()
         {
             using (var con = DataContext.PlainConnection())
-            {
-                con.Open();
                 con.Execute("INSERT INTO WebRequests (DateExecuted) VALUES (GETUTCDATE())");
-            }
         }
     }
 }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
 using System.Linq;
 using Core.Models;
 using Core.Sockets;
 using Dapper;
 using Data;
+using Data.Entities;
 using Data.Migrations;
 using Hangfire;
 
@@ -74,7 +76,6 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                         .Select(r => r.QuestionId)
                         .ToList();
 
-                var now = DateTime.Now;
                 foreach (var questionId in questionIdsToCheck)
                     QueueQuestionQuery(questionId);
             }
@@ -118,29 +119,49 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         public static void QueueQuestionQuery(int questionId, TimeSpan? after = null)
         {
             using (var con = DataContext.PlainConnection())
+                QueueQuestionQuery(con, questionId, after);
+        }
+
+        public static void QueueQuestionQuery(IDbConnection con, int questionId, TimeSpan? after = null)
+        {
+            using (var trans = con.BeginTransaction())
             {
-                using (var trans = con.BeginTransaction())
-                {
-                    var alreadyQueued = con.Query<bool>("SELECT IsQueued FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @id", new {id = questionId}, trans).FirstOrDefault();
-                    if (alreadyQueued)
-                        return;
+                var newQueueTime = DateTime.Now;
+                if (after.HasValue)
+                    newQueueTime = newQueueTime.Add(after.Value);
 
-                    con.Execute("UPDATE Questions SET IsQueued = 1 WHERE Id = @id", new {id = questionId}, trans);
+                var nextQueueTime = con.Query<DateTime?>("SELECT MIN(ProcessTime) FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id", new {id = questionId}, trans).FirstOrDefault();
+                if (nextQueueTime != null && nextQueueTime.Value < newQueueTime)
+                    return;
 
-                    if (after == null)
-                        BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now));
-                    else
-                        BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), after.Value);
-                }
+                con.Execute("INSERT INTO QueuedQuestionQueries(QuestionId, ProcessTime) VALUES (@id, @newQueueTime)", new {newQueueTime = newQueueTime, id = questionId}, trans);
+                trans.Commit();
+
+                if (after == null)
+                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now));
+                else
+                    BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), after.Value);
             }
+
         }
 
         public static void QueryQuestion(int questionId, DateTime dateRequested)
         {
             var connecter = new StackOverflowConnecter();
             using (var con = DataContext.PlainConnection())
-                con.Execute("UPDATE Questions SET IsQueued = 0 WHERE Id = @id", new { id = questionId });                    
-            
+            {
+                using (var trans = con.BeginTransaction())
+                {
+                    var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @id", new {id = questionId}, trans).FirstOrDefault();
+                    con.Execute("DELETE FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id", new { id = questionId }, trans);
+                    trans.Commit();
+
+                    var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
+                    if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
+                        return;
+                }
+            }
+
             var question = connecter.GetQuestionInformation(questionId);
             if (question != null)
                 UpsertQuestionInformation(question);
@@ -148,15 +169,18 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
         private static void UpsertQuestionInformation(QuestionModel question)
         {
+            var newCloseVotesFound = false;
+            Question existingQuestion;
             using (var context = new DataContext())
             {
                 var connection = context.Database.Connection;
                 connection.Open();
+
                 using (var trans = connection.BeginTransaction())
                 {
                     context.Database.UseTransaction(trans);
 
-                    var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
+                    existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
                     var existingVotes = existingQuestion?.QuestionVotes
                         .GroupBy(ev => ev.VoteTypeId)
                         .ToDictionary(g => g.Key, g => g.Count()) ?? new Dictionary<int, int>();
@@ -169,7 +193,6 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                         connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
                     }
 
-                    var newCloseVotesFound = false;
                     foreach (var voteGroup in question.CloseVotes)
                     {
                         int numToInsert;
@@ -185,27 +208,28 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                         }
                     }
 
-                    //New activity
-                    if (newCloseVotesFound || existingQuestion == null)
-                        QueueQuestionQuery(question.Id, TimeSpan.FromMinutes(15));
-                    else
-                    {
-                        //No new activity. Keep checking it less and less often, after about a day it will fall off the queue if no new close votes are found.
-
-                        var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
-                        if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
-                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(1));
-                        else if (timeSinceLastUpdated < TimeSpan.FromHours(1))
-                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(2));
-                        else if (timeSinceLastUpdated < TimeSpan.FromHours(2))
-                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(3));
-                        else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
-                            QueueQuestionQuery(question.Id, TimeSpan.FromHours(24));
-                    }
-
                     trans.Commit();
                 }
             }
+            
+            //New activity
+            if (newCloseVotesFound || existingQuestion == null)
+                QueueQuestionQuery(question.Id, TimeSpan.FromMinutes(15));
+            else
+            {
+                //No new activity. Keep checking it less and less often, after about a day it will fall off the queue if no new close votes are found.
+
+                var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
+                if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(1));
+                else if (timeSinceLastUpdated < TimeSpan.FromHours(1))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(2));
+                else if (timeSinceLastUpdated < TimeSpan.FromHours(2))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(3));
+                else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(24));
+            }
+
         }
     }
 }

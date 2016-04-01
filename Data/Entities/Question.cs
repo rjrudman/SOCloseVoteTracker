@@ -23,9 +23,7 @@ namespace Data.Entities
         public int? DuplicateParentId { get; set; }
 
         public DateTime LastUpdated { get; set; }
-
-        public bool IsQueued { get; set; }
-
+        
         public virtual IList<Tag> Tags { get; set; }
 
         [InverseProperty("Question")]

@@ -52,11 +52,8 @@ INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@U
             Pollers.QueueQuestionQuery(questionId);
 
             using (var connection = DataContext.PlainConnection())
-            {
-                connection.Open();
                 connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });
-            }
-
+            
             //Check on the question again in an hour
             Pollers.QueueQuestionQuery(questionId, TimeSpan.FromHours(1));
         }
