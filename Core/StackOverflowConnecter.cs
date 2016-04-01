@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.Models;
-using Core.StackOverflowResults;
+using Core.RestRequests;
+using Data;
 using RestSharp;
 using Utils;
 
@@ -20,22 +22,20 @@ namespace Core
 
         private IList<int> GetCloseVoteQueue(string mode)
         {
-            var restClient = new RestClient(SITE_URL);
+            var throttler = new RestRequestThrottler(SITE_URL, "tools", Method.GET, _authenticator);
 
-            var restRequest = new RestRequest("tools", Method.GET);
-            _authenticator.AuthenticateRequest(restRequest);
+            throttler.Request.AddHeader("X-Requested-With", "XMLHttpRequest");
 
-            restRequest.AddHeader("X-Requested-With", "XMLHttpRequest");
+            throttler.Request.AddParameter("tab", "close");
+            throttler.Request.AddParameter("daterange", "today");
+            throttler.Request.AddParameter("mode", mode);
 
-            restRequest.AddParameter("tab", "close");
-            restRequest.AddParameter("daterange", "today");
-            restRequest.AddParameter("mode", mode);
+            var response = throttler.Execute();
 
-            var response = restClient.Execute(restRequest);
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 
-            var rows = parser.Result.QuerySelectorAll("table tr");
+            var rows = parser.Result.QuerySelectorAll(".summary-table tr");
             return rows.Select(r =>
             {
                 var link = r.QuerySelector("td a");
@@ -46,6 +46,35 @@ namespace Core
 
                 return id;
             }).ToList();
+        }
+
+        public IList<int> GetRecentCloseVoteReviews()
+        {
+            var throttler = new RestRequestThrottler(SITE_URL, "review/close/history", Method.GET, _authenticator);
+
+            var response = throttler.Execute();
+            var parser = new HtmlParser(response.Content);
+
+            var rows = parser.Result.QuerySelectorAll(".question-hyperlink");
+            return rows.Select(r =>
+            {
+                var text = r.TextContent;
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    int id;
+                    if (int.TryParse(text, out id))
+                        return id;
+                }
+                return (int?) null;
+            })
+                .Where(r => r.HasValue)
+                .Select(r => r.Value)
+                .ToList();
+        }
+
+        public IList<int> GetRecentlyClosed()
+        {
+            return GetCloseVoteQueue("recentlyClosed");
         }
 
         public IList<int> GetMostVotedCloseVotesQuestionIds()
@@ -60,22 +89,38 @@ namespace Core
 
         public QuestionModel GetQuestionInformation(int questionId)
         {
-            var restClient = new RestClient(SITE_URL);
-
-            var restRequest = new RestRequest($"questions/{questionId}", Method.GET);
-            _authenticator.AuthenticateRequest(restRequest);
+            var throttler = new RestRequestThrottler(SITE_URL, $"questions/{questionId}", Method.GET, _authenticator);
             
-            var response = restClient.Execute(restRequest);
+            var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
+            if (response.StatusCode != HttpStatusCode.OK)
+                return null;
+
             parser.Parse();
 
             var tags = parser.Result.QuerySelectorAll(".post-taglist .post-tag").Select(t => t.TextContent);
             var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
             var isClosed = parser.Result.QuerySelectorAll(".question-status").Any();
 
-            var votes = isClosed 
-                ? new Dictionary<int, int>() : 
-                GetCloseVotes(questionId);
+            var numCloseVotes = 0;
+            var existingFlagCount = parser.Result.QuerySelector(".existing-flag-count");
+            if (!string.IsNullOrWhiteSpace(existingFlagCount?.TextContent))
+                numCloseVotes = int.Parse(existingFlagCount.TextContent);
+
+            var requireCloseVoteDetails = false;
+            if (!isClosed && numCloseVotes > 0)
+            {
+                using (var context = new DataContext())
+                {
+                    var question = context.Questions.FirstOrDefault(q => q.Id == questionId);
+                    if (question != null && question.QuestionVotes.Count != numCloseVotes)
+                        requireCloseVoteDetails = true;
+                }
+            }
+
+            var votes = requireCloseVoteDetails
+                ? GetCloseVotes(questionId)
+                : new Dictionary<int, int>();
             
             return new QuestionModel
             {
@@ -87,15 +132,13 @@ namespace Core
             };
         }
 
-        //TODO: Tidy this logic up a bit (a central area mapping top-level close reason to an ID would be nice).
+        //One request every 3.5 seconds.
+        private static readonly TimeSpanSemaphore CloseVotePopupThrottle = new TimeSpanSemaphore(1, TimeSpan.FromSeconds(3.5));
         private Dictionary<int, int> GetCloseVotes(int questionId)
         {
-            var restClient = new RestClient(SITE_URL);
-
-            var restRequest = new RestRequest($"flags/questions/{questionId}/close/popup", Method.GET);
-            _authenticator.AuthenticateRequest(restRequest);
-
-            var response = restClient.Execute(restRequest);
+            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator, CloseVotePopupThrottle);
+            
+            var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 
@@ -105,25 +148,25 @@ namespace Core
 
             foreach (var closeVoteTag in closeVoteTags)
             {
-                var topLevelCloseReasonNode = closeVoteTag.ParentElement.QuerySelector("input[name=\"close-reason\"]");
+                var topLevelCloseReasonNode = closeVoteTag.ParentElement.QuerySelector("#pane-main span.action-name");
                 int closeVoteTypeId;
                 if (topLevelCloseReasonNode != null)
                 {
-                    var topLevelCloseReason = topLevelCloseReasonNode.GetAttribute("value");
+                    var topLevelCloseReason = topLevelCloseReasonNode.TextContent;
                     switch (topLevelCloseReason)
                     {
-                        case "Duplicate":
+                        case "duplicate of...":
                             closeVoteTypeId = 1000;
                             break;
-                        case "OffTopic":
+                        case "off-topic because...":
                             continue;
-                        case "Unclear":
+                        case "unclear what you're asking":
                             closeVoteTypeId = 1001;
                             break;
-                        case "TooBroad":
+                        case "too broad":
                             closeVoteTypeId = 1002;
                             break;
-                        case "OpinionBased":
+                        case "primarily opinion-based":
                             closeVoteTypeId = 1003;
                             break;
                         default:

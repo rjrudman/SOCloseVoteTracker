@@ -26,6 +26,8 @@ namespace Data
         public DbSet<Tag> Tags { get; set; }
         public DbSet<VoteType> VoteTypes { get; set; }
         public DbSet<QuestionVote> QuestionVotes { get; set; }
+        public DbSet<CVPlsRequest> CVPlsRequests { get; set; }
+        public DbSet<WebRequest> WebRequests { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -33,6 +35,8 @@ namespace Data
             modelBuilder.Entity<Tag>().ToTable("Tags");
             modelBuilder.Entity<VoteType>().ToTable("VoteTypes");
             modelBuilder.Entity<QuestionVote>().ToTable("QuestionVotes");
+            modelBuilder.Entity<CVPlsRequest>().ToTable("CVPlsRequests");
+            modelBuilder.Entity<WebRequest>().ToTable("WebRequests");
 
             modelBuilder.Entity<Question>()
                 .HasMany(q => q.Tags)

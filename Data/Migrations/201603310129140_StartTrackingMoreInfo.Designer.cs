@@ -7,13 +7,13 @@ namespace Data.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.1.3-40302")]
-    public sealed partial class FixQuestionVotePrimaryKey : IMigrationMetadata
+    public sealed partial class StartTrackingMoreInfo : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(FixQuestionVotePrimaryKey));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(StartTrackingMoreInfo));
         
         string IMigrationMetadata.Id
         {
-            get { return "201603240417165_FixQuestionVotePrimaryKey"; }
+            get { return "201603310129140_StartTrackingMoreInfo"; }
         }
         
         string IMigrationMetadata.Source

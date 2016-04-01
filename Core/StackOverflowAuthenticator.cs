@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.RestRequests;
 using RestSharp;
 
 namespace Core
 {
-    class StackOverflowAuthenticator
+    public class StackOverflowAuthenticator
     {
         private const string BASE_URL = @"https://stackoverflow.com";
 
@@ -27,14 +28,13 @@ namespace Core
         {
             if (!CurrentAuthCookiesValid())
             {
-                var restClient = new RestClient(BASE_URL);
-                var restRequest = new RestRequest("users/login", Method.POST);
-                restClient.FollowRedirects = false;
+                var throttler = new RestRequestThrottler(BASE_URL, "users/login", Method.POST);
+                throttler.Client.FollowRedirects = false;
 
-                restRequest.AddParameter("email", _username);
-                restRequest.AddParameter("password", _password);
+                throttler.Request.AddParameter("email", _username);
+                throttler.Request.AddParameter("password", _password);
 
-                var response = restClient.Execute(restRequest);
+                var response = throttler.Execute();
 
                 _authCookies.AddRange(response.Cookies);
                 _refreshCookieTime = _authCookies.Min(ac => ac.Expires);

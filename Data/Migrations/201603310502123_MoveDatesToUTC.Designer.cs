@@ -7,13 +7,13 @@ namespace Data.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.1.3-40302")]
-    public sealed partial class InitialSchema : IMigrationMetadata
+    public sealed partial class MoveDatesToUTC : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(InitialSchema));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(MoveDatesToUTC));
         
         string IMigrationMetadata.Id
         {
-            get { return "201603240230402_InitialSchema"; }
+            get { return "201603310502123_MoveDatesToUTC"; }
         }
         
         string IMigrationMetadata.Source

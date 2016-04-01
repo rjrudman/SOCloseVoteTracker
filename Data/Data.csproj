@@ -57,29 +57,35 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataContext.cs" />
+    <Compile Include="Entities\CVPlsRequest.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\QuestionVote.cs" />
     <Compile Include="Entities\Tag.cs" />
     <Compile Include="Entities\VoteType.cs" />
-    <Compile Include="Migrations\201603240230402_InitialSchema.cs" />
-    <Compile Include="Migrations\201603240230402_InitialSchema.Designer.cs">
-      <DependentUpon>201603240230402_InitialSchema.cs</DependentUpon>
+    <Compile Include="Entities\WebRequest.cs" />
+    <Compile Include="Migrations\201603270714275_InitialSchema.cs" />
+    <Compile Include="Migrations\201603270714275_InitialSchema.Designer.cs">
+      <DependentUpon>201603270714275_InitialSchema.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201603240307290_StoreCloseVotes.cs" />
-    <Compile Include="Migrations\201603240307290_StoreCloseVotes.Designer.cs">
-      <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
+    <Compile Include="Migrations\201603310129140_StartTrackingMoreInfo.cs" />
+    <Compile Include="Migrations\201603310129140_StartTrackingMoreInfo.Designer.cs">
+      <DependentUpon>201603310129140_StartTrackingMoreInfo.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201603240410050_CloseVotes.cs" />
-    <Compile Include="Migrations\201603240410050_CloseVotes.Designer.cs">
-      <DependentUpon>201603240410050_CloseVotes.cs</DependentUpon>
+    <Compile Include="Migrations\201603310404254_TrackTimeOnCVPlsRequests.cs" />
+    <Compile Include="Migrations\201603310404254_TrackTimeOnCVPlsRequests.Designer.cs">
+      <DependentUpon>201603310404254_TrackTimeOnCVPlsRequests.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.cs" />
-    <Compile Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.Designer.cs">
-      <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
+    <Compile Include="Migrations\201603310409133_TrackFullCVSPlsRequest.cs" />
+    <Compile Include="Migrations\201603310409133_TrackFullCVSPlsRequest.Designer.cs">
+      <DependentUpon>201603310409133_TrackFullCVSPlsRequest.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201603240501078_CheckLastUpdatedQuestionTime.cs" />
-    <Compile Include="Migrations\201603240501078_CheckLastUpdatedQuestionTime.Designer.cs">
-      <DependentUpon>201603240501078_CheckLastUpdatedQuestionTime.cs</DependentUpon>
+    <Compile Include="Migrations\201603310502123_MoveDatesToUTC.cs" />
+    <Compile Include="Migrations\201603310502123_MoveDatesToUTC.Designer.cs">
+      <DependentUpon>201603310502123_MoveDatesToUTC.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604010401366_TrackWebRequests.cs" />
+    <Compile Include="Migrations\201604010401366_TrackWebRequests.Designer.cs">
+      <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -89,20 +95,23 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201603240230402_InitialSchema.resx">
-      <DependentUpon>201603240230402_InitialSchema.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603270714275_InitialSchema.resx">
+      <DependentUpon>201603270714275_InitialSchema.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201603240307290_StoreCloseVotes.resx">
-      <DependentUpon>201603240307290_StoreCloseVotes.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603310129140_StartTrackingMoreInfo.resx">
+      <DependentUpon>201603310129140_StartTrackingMoreInfo.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201603240410050_CloseVotes.resx">
-      <DependentUpon>201603240410050_CloseVotes.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603310404254_TrackTimeOnCVPlsRequests.resx">
+      <DependentUpon>201603310404254_TrackTimeOnCVPlsRequests.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201603240417165_FixQuestionVotePrimaryKey.resx">
-      <DependentUpon>201603240417165_FixQuestionVotePrimaryKey.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603310409133_TrackFullCVSPlsRequest.resx">
+      <DependentUpon>201603310409133_TrackFullCVSPlsRequest.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201603240501078_CheckLastUpdatedQuestionTime.resx">
-      <DependentUpon>201603240501078_CheckLastUpdatedQuestionTime.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201603310502123_MoveDatesToUTC.resx">
+      <DependentUpon>201603310502123_MoveDatesToUTC.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604010401366_TrackWebRequests.resx">
+      <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
