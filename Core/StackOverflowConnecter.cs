@@ -124,7 +124,7 @@ namespace Core
             var isClosed =
                 parser.Result.QuerySelectorAll(".question-status b")
                     .Select(e => e.TextContent)
-                    .Any(c => c == "put on hold" || c == "marked");
+                    .Any(c => c == "put on hold" || c == "marked" || c == "closed");
 
             var isDeleted = parser.Result.QuerySelectorAll(".question-status b").Select(e => e.TextContent).Any(c => c == "deleted");
 
