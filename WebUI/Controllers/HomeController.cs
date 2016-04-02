@@ -114,7 +114,9 @@ namespace WebUI.Controllers
                         q.Id,
                         Tags = q.Tags,
                         q.Title,
-                        q.Closed, q.LastUpdated,
+                        q.Closed,
+                        q.Deleted,
+                        q.LastUpdated,
                         VoteCount = q.QuestionVotes.Count()
                     })
                     .ToList()
@@ -124,6 +126,7 @@ namespace WebUI.Controllers
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Title,
                         q.Closed,
+                        q.Deleted,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
                         q.VoteCount
                     });
