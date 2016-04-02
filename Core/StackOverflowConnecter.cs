@@ -210,6 +210,9 @@ namespace Core
             var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator, CloseVotePopupThrottle);
             
             var response = throttler.Execute();
+            if (response.StatusCode != HttpStatusCode.OK) //We're throttled to 3 seconds. Exceeding this throttle returns a 409 response. Throwing an exception will put it into the retry queue.
+                throw new Exception("Failed to load close dialog");
+
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 
