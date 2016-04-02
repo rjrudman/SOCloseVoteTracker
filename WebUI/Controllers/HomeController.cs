@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Dynamic;
 using System.Linq;
 using System.Web.Mvc;
@@ -29,18 +30,33 @@ namespace WebUI.Controllers
         [HttpPost]
         public ActionResult RunSQL(string sql)
         {
-            using (var con = DataContext.PlainConnection())
+            try
             {
-                var formattedResults = new List<Dictionary<string, object>>();
-                var results = con.Query(sql).ToList();
-                foreach (var row in results)
+                using (var con = DataContext.PlainConnection())
                 {
-                    var formattedRow = new Dictionary<string, object>();
-                    foreach (var property in row)
-                        formattedRow[property.Key] = property.Value;
-                    formattedResults.Add(formattedRow);
+                    var formattedResults = new List<Dictionary<string, object>>();
+                    var results = con.Query(sql).ToList();
+                    foreach (var row in results)
+                    {
+                        var formattedRow = new Dictionary<string, object>();
+                        foreach (var property in row)
+                        {
+                            var value = property.Value;
+                            if (value != null && value is DateTime)
+                            {
+                                var dateValue = (DateTime) value;
+                                value = dateValue.ToString("yy-MM-dd hh:mm:ss") + " GMT";
+                            }
+                            formattedRow[property.Key] = value;
+                        }
+                        formattedResults.Add(formattedRow);
+                    }
+                    return Json(formattedResults);
                 }
-                return Json(formattedResults);
+            }
+            catch (SqlException ex)
+            {
+                return Json(new[] {new {Error = ex.Message}});
             }
         }
 
@@ -97,7 +113,7 @@ namespace WebUI.Controllers
                     .ToList()
                     .Select(q => new
                     {
-                        QuestionID = q.Id,
+                        QuestionId = q.Id,
                         q.Title,
                         q.Closed,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
