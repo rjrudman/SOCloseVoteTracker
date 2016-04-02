@@ -106,6 +106,7 @@ namespace WebUI.Controllers
                     .Select(q => new
                     {
                         q.Id,
+                        Tags = q.Tags,
                         q.Title,
                         q.Closed, q.LastUpdated,
                         VoteCount = q.QuestionVotes.Count()
@@ -114,6 +115,7 @@ namespace WebUI.Controllers
                     .Select(q => new
                     {
                         QuestionId = q.Id,
+                        Tags = string.Join(", ", q.Tags),
                         q.Title,
                         q.Closed,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",

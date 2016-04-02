@@ -18,12 +18,12 @@ namespace Core.Workers
         const string UPSERT_QUESTION_SQL = @"
 IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @Id)
 BEGIN
-    INSERT INTO Questions(Id, Closed, Title, LastUpdated) VALUES (@Id, @Closed, @Title, GETUTCDATE())
+    INSERT INTO Questions(Id, Closed, Deleted, DuplicateParentId, Asked, Title, LastUpdated) VALUES (@Id, @Closed, @Deleted, @DuplicateParentId, @Asked, @Title, GETUTCDATE())
 END
 ELSE
 BEGIN
     UPDATE Questions
-    SET Closed = @Closed, Title = @Title, LastUpdated = GETUTCDATE()
+    SET Closed = @Closed, Deleted = @Deleted, DuplicateParentId = @DuplicateParentId, Asked = @Asked, Title = @Title, LastUpdated = GETUTCDATE()
     WHERE Id = @Id
 END
 ";
@@ -52,17 +52,20 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
-            //Every 5 minutes
-            RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => GetRecentCloseVoteReviews(), "*/5 * * * *");
-            //Every hour
-            RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
+            if (!Utils.Configuration.DisablePolling)
+            {
+                //Every 5 minutes
+                RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => GetRecentCloseVoteReviews(), "*/5 * * * *");
+                //Every hour
+                RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
 
-            PollFrontPage();
+                PollFrontPage();
 
-            Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+                Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+            }
         }
 
         public static void CheckCVPls()
@@ -155,8 +158,6 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 {
                     con.Execute("DELETE FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id AND ProcessTime <= @processTime", new { id = questionId, processTime = DateTime.Now }, trans);
                     trans.Commit();
-
-                 
                 }
 
                 var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);

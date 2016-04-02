@@ -103,6 +103,10 @@
     <Compile Include="Migrations\201604020432445_FixQuestionTagsColumnName.Designer.cs">
       <DependentUpon>201604020432445_FixQuestionTagsColumnName.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs" />
+    <Compile Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.Designer.cs">
+      <DependentUpon>201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -140,6 +144,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604020432445_FixQuestionTagsColumnName.resx">
       <DependentUpon>201604020432445_FixQuestionTagsColumnName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.resx">
+      <DependentUpon>201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

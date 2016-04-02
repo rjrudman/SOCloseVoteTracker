@@ -13,6 +13,9 @@ namespace Data.Entities
 
         public string Title { get; set; }
         public bool Closed { get; set; }
+        public bool Deleted { get; set; }
+
+        public DateTime? Asked { get; set; }
 
         [ForeignKey("CloseVoteTypeId")]
         public virtual VoteType CloseVoteType { get; set; }

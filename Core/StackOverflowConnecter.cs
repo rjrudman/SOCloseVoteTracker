@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.Models;
 using Core.RestRequests;
+using Core.Workers;
 using Data;
 using RestSharp;
 using Utils;
@@ -106,7 +108,7 @@ namespace Core
                 var match = _questionIdRegex.Match(url);
                 var id = int.Parse(match.Groups["questionID"].Value);
                 if (id != questionId)
-                    throw new Exception("Question ID returned the wrong question");
+                    throw new Exception($"Question ID returned the wrong question: I queried {questionId} but got {id}");
             }
             else
             {
@@ -115,7 +117,26 @@ namespace Core
 
             var tags = parser.Result.QuerySelectorAll(".post-taglist .post-tag").Select(t => t.TextContent);
             var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
-            var isClosed = parser.Result.QuerySelectorAll(".question-status").Any();
+            var isClosed =
+                parser.Result.QuerySelectorAll(".question-status b")
+                    .Select(e => e.TextContent)
+                    .Any(c => c == "put on hold" || c == "marked");
+
+            var isDeleted = parser.Result.QuerySelectorAll(".question-status b").Select(e => e.TextContent).Any(c => c == "deleted");
+
+            var askedStr = parser.Result.QuerySelector(".postcell .post-signature .relativetime").GetAttribute("title");
+            var asked = DateTime.ParseExact(askedStr, "yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture).ToUniversalTime();
+
+            int? dupeParent = null;
+            var possibleDupeTargetLink = parser.Result.QuerySelector(".question-originals-of-duplicate a");
+            if (possibleDupeTargetLink != null)
+            {
+                var url = possibleDupeTargetLink.GetAttribute("href");
+
+                var match = _questionIdRegex.Match(url);
+                dupeParent = int.Parse(match.Groups["questionID"].Value);
+                Pollers.QueryQuestion(dupeParent.Value, DateTime.Now);
+            }
 
             var numCloseVotes = 0;
             var existingFlagCount = parser.Result.QuerySelector(".existing-flag-count");
@@ -140,6 +161,9 @@ namespace Core
             return new QuestionModel
             {
                 Closed = isClosed,
+                Deleted = isDeleted,
+                Asked = asked,
+                DuplicateParentId = dupeParent,
                 Title = title,
                 Id = questionId,
                 Tags = tags.ToList(),

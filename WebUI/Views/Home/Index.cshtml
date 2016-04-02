@@ -83,10 +83,11 @@
             </div>
 
             <textarea id="txtSql" style="width: 100%; height: 600px">SELECT TOP 100
-Id as [QuestionID], Title, LastUpdated, COUNT(*) as NumVotes
+Id as [QuestionID], Title, Closed, LastUpdated, COUNT(*) as NumVotes
 FROM QUESTIONS
 LEFT JOIN QuestionVotes on QuestionVotes.QuestionId = Questions.Id
-GROUP BY Questions.Id, Questions.Title,Questions.LastUpdated
+WHERE Closed = 0
+GROUP BY Questions.Id, Questions.Title,Questions.LastUpdated,Questions.Closed
 ORDER BY COUNT(*) DESC</textarea>
 
             <button id="submitSql" type="submit" class="btn btn-default">Submit</button>
@@ -193,7 +194,7 @@ ORDER BY COUNT(*) DESC</textarea>
             for (var j = 0; j < headers.length; j++) {
                 var headerName = headers[j];
                 var dataItem = data[i][headerName];
-                if (headerName === 'QuestionID') {
+                if (headerName.toLowerCase() === 'questionid') {
                     htmlRow.append('<td><a href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + dataItem + '">' + dataItem + '</a></td>');
                 } else {
                     htmlRow.append('<td>' + dataItem + "</td>");
