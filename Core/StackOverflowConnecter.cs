@@ -18,7 +18,7 @@ namespace Core
         private const string SITE_URL = @"https://stackoverflow.com";
 
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
-        private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
+        private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
 
         private IList<int> GetCloseVoteQueue(string mode)
         {
@@ -98,7 +98,7 @@ namespace Core
 
             parser.Parse();
 
-            var idElement = parser.Result.QuerySelector("meta[property='og: url']");
+            var idElement = parser.Result.QuerySelector("meta[property='og:url']");
             if (idElement != null)
             {
                 var url = idElement.GetAttribute("content");
