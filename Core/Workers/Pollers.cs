@@ -152,14 +152,16 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             {
                 using (var trans = con.BeginTransaction())
                 {
-                    var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @id", new {id = questionId}, trans).FirstOrDefault();
-                    con.Execute("DELETE FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id AND ProcessTime < @processTime", new { id = questionId, processTime = DateTime.Now }, trans);
+                    con.Execute("DELETE FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id AND ProcessTime <= @processTime", new { id = questionId, processTime = DateTime.Now }, trans);
                     trans.Commit();
 
-                    var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
-                    if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
-                        return;
+                 
                 }
+
+                var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
+                var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new { id = questionId }).FirstOrDefault();
+                if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
+                    return;
             }
 
             var question = connecter.GetQuestionInformation(questionId);
