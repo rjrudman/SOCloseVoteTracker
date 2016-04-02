@@ -22,6 +22,7 @@ namespace WebUI.Controllers
             public string TagSearch { get; set; }
             public int TagSearchType { get; set; }
             public int Closed { get; set; }
+            public int Deleted { get; set; }
             public int VoteCount { get; set; }
             public int VoteCountCompare { get; set; }
             public int CloseReason { get; set; }
@@ -85,6 +86,11 @@ namespace WebUI.Controllers
                     dataQuery = dataQuery.Where(q => !q.Closed);
                 else if (query.Closed == 2)
                     dataQuery = dataQuery.Where(q => q.Closed);
+
+                if (query.Deleted == 1)
+                    dataQuery = dataQuery.Where(q => !q.Deleted);
+                else if (query.Deleted == 2)
+                    dataQuery = dataQuery.Where(q => q.Deleted);
 
                 if (query.VoteCountCompare == 1)
                     dataQuery = dataQuery.Where(q => q.QuestionVotes.Count == query.VoteCount);
