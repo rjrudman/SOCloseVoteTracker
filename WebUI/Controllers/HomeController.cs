@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Web.Mvc;
+using Dapper;
 using Data;
 using Data.Entities;
 
@@ -21,6 +24,24 @@ namespace WebUI.Controllers
             public int VoteCount { get; set; }
             public int VoteCountCompare { get; set; }
             public int CloseReason { get; set; }
+        }
+
+        [HttpPost]
+        public ActionResult RunSQL(string sql)
+        {
+            using (var con = DataContext.PlainConnection())
+            {
+                var formattedResults = new List<Dictionary<string, object>>();
+                var results = con.Query(sql).ToList();
+                foreach (var row in results)
+                {
+                    var formattedRow = new Dictionary<string, object>();
+                    foreach (var property in row)
+                        formattedRow[property.Key] = property.Value;
+                    formattedResults.Add(formattedRow);
+                }
+                return Json(formattedResults);
+            }
         }
 
         [HttpPost]

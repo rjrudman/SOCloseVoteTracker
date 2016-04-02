@@ -98,6 +98,21 @@ namespace Core
 
             parser.Parse();
 
+            var actualId = parser.Result.QuerySelector("#question-header a");
+            if (actualId != null)
+            {
+                var url = actualId.GetAttribute("href");
+
+                var match = _questionIdRegex.Match(url);
+                var id = int.Parse(match.Groups["questionID"].Value);
+                if (id != questionId)
+                    throw new Exception("Question ID returned the wrong question");
+            }
+            else
+            {
+                throw new Exception("Page not found");
+            }
+
             var tags = parser.Result.QuerySelectorAll(".post-taglist .post-tag").Select(t => t.TextContent);
             var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
             var isClosed = parser.Result.QuerySelectorAll(".question-status").Any();

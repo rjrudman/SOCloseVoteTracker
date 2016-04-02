@@ -62,7 +62,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
             PollFrontPage();
 
-            Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+          //  Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
         }
 
         public static void CheckCVPls()
@@ -90,7 +90,8 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         {
             ActiveQuestionsPoller.Register(question =>
             {
-                QueueQuestionQuery((int) question.ID, TimeSpan.FromMinutes(15));
+                if (question.SiteBaseHostAddress == "stackoverflow.com")
+                    QueueQuestionQuery((int) question.ID, TimeSpan.FromMinutes(15));
             });
         }
 

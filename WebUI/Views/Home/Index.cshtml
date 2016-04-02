@@ -22,39 +22,62 @@
     </style>
 </head>
 <body>
+
 <div class="container" style="margin-top: 20px">
-    <div class="options">
-        <div class="optionItem">
-            <label class="filterName">Tags</label>
-            <input id="txtTags" type="text"/>
-            <div id="tags" class="btn-group" data-toggle="buttons"></div>
-        </div>
-        <div class="optionItem">
-            <label class="filterName">Closed</label>
-            <div id="closed" class="btn-group" data-toggle="buttons"> </div>
-        </div>
-        <div class="optionItem">
-            <label class="filterName">Votes</label>
+    <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#Interface" aria-controls="Interface" role="tab" data-toggle="tab">Interface</a></li>
+        <li role="presentation"><a href="#RawSQL" aria-controls="RawSQL" role="tab" data-toggle="tab">Raw SQL</a></li>
+    </ul>
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="Interface">
+            <div class="options">
+                <div class="optionItem">
+                    <label class="filterName">Tags</label>
+                    <input id="txtTags" type="text"/>
+                    <div id="tags" class="btn-group" data-toggle="buttons"></div>
+                </div>
+                <div class="optionItem">
+                    <label class="filterName">Closed</label>
+                    <div id="closed" class="btn-group" data-toggle="buttons"> </div>
+                </div>
+                <div class="optionItem">
+                    <label class="filterName">Votes</label>
 
-            <div id="voteCount" class="btn-group" data-toggle="buttons"> </div>
-            <div id="voteCountCompare" class="btn-group" data-toggle="buttons"> </div>
+                    <div id="voteCount" class="btn-group" data-toggle="buttons"> </div>
+                    <div id="voteCountCompare" class="btn-group" data-toggle="buttons"> </div>
+                </div>
+
+                <div class="optionItem">
+                    <label class="filterName">Close Reason</label><br/>
+                    <div id="closeReasonGroup" class="btn-group" data-toggle="buttons"> </div>
+                </div>
+
+                <br/>
+                <button id="submit" type="submit" class="btn btn-default">Submit</button>
+
+                <table id="simpleTable" class="table"></table>
+            </div>
         </div>
+        <div role="tabpanel" class="tab-pane" id="RawSQL">
+            <div style="padding: 15px;">
+                Yes! You can run raw SQL <br/><br/>
+                <b>Server:</b> soclosevotetracker.database.windows.net,1433<br/>
+                <b>Username:</b> SOCVRReadonly<br/>
+                <b>Password:</b> 30QITGxS69dpd6aPRlr5mb7pkMvtAv<br/>
+                <b>ADO.NET connection string:</b><br/> Server=tcp:soclosevotetracker.database.windows.net,1433;Database=SOCloseVoteTrackerDB;User ID=SOCVRReadonly;Password=30QITGxS69dpd6aPRlr5mb7pkMvtAv;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;<br/>
+            </div>
 
-        <div class="optionItem">
-            <label class="filterName">Close Reason</label><br/>
-            <div id="closeReasonGroup" class="btn-group" data-toggle="buttons"> </div>
+            <textarea id="txtSql" style="width: 100%; height: 600px">Insert your SQL here</textarea>
+
+            <button id="submitSql" type="submit" class="btn btn-default">Submit</button>
+
+            <table id="dynamicTable" class="table"></table>
         </div>
-
-        <br/>
-        <button id="submit" type="submit" class="btn btn-default">Submit</button>
-
-        <table id="simpleTable" class="table"></table>
     </div>
 </div>
-
-    <script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-    
+
 <script type="text/javascript">
     $(function () {
         var tags = [
@@ -107,6 +130,7 @@
         fillOptions($('#closeReasonGroup'), 'closeReason', closeReasons);
 
         $('#submit').click(makeRequest);
+        $('#submitSql').click(makeSqlRequest);
     });
 
     function fillOptions(group, groupName, options) {
@@ -149,12 +173,12 @@
             for (var j = 0; j < headers.length; j++) {
                 var headerName = headers[j];
                 var dataItem = data[i][headerName];
-                if (headerName === 'QuestionID') {
+                if (headerName === 'QuestionID' || headerName === 'Id') {
                     htmlRow.append('<td><a href="http://stackoverflow.com/questions/' + dataItem + '">' + dataItem + '</a></td>');
                 } else {
                     htmlRow.append('<td>' + dataItem + "</td>");
                 }
-                
+
             }
             body.append(htmlRow);
         }
@@ -184,8 +208,16 @@
             CloseReason: closeReason
         };
 
-        $.post('/Home/SearchData', requestData, function(results) {
+        $.post('/Home/SearchData', requestData, function (results) {
             renderTable($('#simpleTable'), results);
+        });
+    }
+
+    function makeSqlRequest() {
+        var sql = $('#txtSql').val();
+        
+        $.post('/Home/RunSQL', {sql: sql}, function (results) {
+            renderTable($('#dynamicTable'), results);
         });
     }
 
