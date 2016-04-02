@@ -29,7 +29,7 @@ namespace Core
             _password = password;
         }
 
-        private IEnumerable<RestResponseCookie> GetAuthCookies()
+        private IList<RestResponseCookie> GetAuthCookies()
         {
             lock (CookieLocker)
             {
