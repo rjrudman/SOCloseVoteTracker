@@ -135,7 +135,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     newQueueTime = newQueueTime.Add(after.Value);
 
                 var nextQueueTime = con.Query<DateTime?>("SELECT MIN(ProcessTime) FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id", new {id = questionId}, trans).FirstOrDefault();
-                if (nextQueueTime != null && nextQueueTime.Value < newQueueTime)
+                if (nextQueueTime != null && nextQueueTime.Value > DateTime.Now && nextQueueTime.Value < newQueueTime)
                     return;
 
                 con.Execute("INSERT INTO QueuedQuestionQueries(QuestionId, ProcessTime) VALUES (@id, @newQueueTime)", new {newQueueTime = newQueueTime, id = questionId}, trans);
@@ -160,10 +160,11 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     trans.Commit();
                 }
 
-                var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
-                var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new { id = questionId }).FirstOrDefault();
-                if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
-                    return;
+                //Possibly put this back in later
+                //var oneMinuteAgo = DateTime.Now.AddMinutes(-1);
+                //var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new { id = questionId }).FirstOrDefault();
+                //if (lastUpdated != null && lastUpdated.Value >= oneMinuteAgo)
+                //    return;
             }
 
             var question = connecter.GetQuestionInformation(questionId);
