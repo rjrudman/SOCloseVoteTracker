@@ -13,6 +13,13 @@ namespace Data.Entities
 
         public string Title { get; set; }
         public bool Closed { get; set; }
+        public bool Deleted { get; set; }
+
+        public int DeleteVotes { get; set; }
+        public int UndeleteVotes { get; set; }
+        public int ReopenVotes { get; set; }
+
+        public DateTime? Asked { get; set; }
 
         [ForeignKey("CloseVoteTypeId")]
         public virtual VoteType CloseVoteType { get; set; }
@@ -23,7 +30,7 @@ namespace Data.Entities
         public int? DuplicateParentId { get; set; }
 
         public DateTime LastUpdated { get; set; }
-
+        
         public virtual IList<Tag> Tags { get; set; }
 
         [InverseProperty("Question")]

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using Core.Models;
 using Core.RestRequests;
+using Core.Workers;
 using Data;
 using RestSharp;
 using Utils;
@@ -18,7 +20,9 @@ namespace Core
         private const string SITE_URL = @"https://stackoverflow.com";
 
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
-        private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)\\/.*");
+        private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
+        private readonly Regex _undeleteVoteCount = new Regex("^undelete \\((?<numVotes>\\d)\\)$");
+        private readonly Regex _deleteVoteCount = new Regex("^delete \\((?<numVotes>\\d)\\)$");
 
         private IList<int> GetCloseVoteQueue(string mode)
         {
@@ -98,14 +102,73 @@ namespace Core
 
             parser.Parse();
 
+            var idElement = parser.Result.QuerySelector("meta[property='og:url']");
+            if (idElement != null)
+            {
+                var url = idElement.GetAttribute("content");
+
+                var match = _questionIdRegex.Match(url);
+                var id = int.Parse(match.Groups["questionID"].Value);
+                if (id != questionId)
+                    throw new Exception($"Question ID returned the wrong question: I queried {questionId} but got {id}");
+            }
+            else
+            {
+                throw new Exception("Page not found");
+            }
+
             var tags = parser.Result.QuerySelectorAll(".post-taglist .post-tag").Select(t => t.TextContent);
             var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
-            var isClosed = parser.Result.QuerySelectorAll(".question-status").Any();
+            var isClosed =
+                parser.Result.QuerySelectorAll(".question-status b")
+                    .Select(e => e.TextContent)
+                    .Any(c => c == "put on hold" || c == "marked");
 
+            var isDeleted = parser.Result.QuerySelectorAll(".question-status b").Select(e => e.TextContent).Any(c => c == "deleted");
+
+            var deleteVotes = 0;
+            var deleteVotesElement = parser.Result.QuerySelector($"#delete-post-{questionId}");
+            if (deleteVotesElement != null)
+            {
+                var content = deleteVotesElement.TextContent;
+                var match = _deleteVoteCount.Match(content);
+                if (match.Success)
+                    deleteVotes = int.Parse(match.Groups["numVotes"].Value);
+            }
+
+            var undeleteVotes = 0;
+            var undeleteVotesElement = parser.Result.QuerySelector(".deleted-post");
+            if (undeleteVotesElement != null)
+            {
+                var content = undeleteVotesElement.TextContent;
+                var match = _undeleteVoteCount.Match(content);
+                if (match.Success)
+                    undeleteVotes = int.Parse(match.Groups["numVotes"].Value);
+            }
+
+            var askedStr = parser.Result.QuerySelector(".postcell .post-signature .relativetime").GetAttribute("title");
+            var asked = DateTime.ParseExact(askedStr, "yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture).ToUniversalTime();
+
+            int? dupeParent = null;
+            var possibleDupeTargetLink = parser.Result.QuerySelector(".question-originals-of-duplicate a");
+            if (possibleDupeTargetLink != null)
+            {
+                var url = possibleDupeTargetLink.GetAttribute("href");
+
+                var match = _questionIdRegex.Match(url);
+                dupeParent = int.Parse(match.Groups["questionID"].Value);
+                Pollers.QueryQuestion(dupeParent.Value, DateTime.Now);
+            }
+            
             var numCloseVotes = 0;
-            var existingFlagCount = parser.Result.QuerySelector(".existing-flag-count");
-            if (!string.IsNullOrWhiteSpace(existingFlagCount?.TextContent))
-                numCloseVotes = int.Parse(existingFlagCount.TextContent);
+            var numCloseVotesElement = parser.Result.QuerySelector(".close-question-link[data-isclosed='false'] .existing-flag-count");
+            if (!string.IsNullOrWhiteSpace(numCloseVotesElement?.TextContent))
+                numCloseVotes = int.Parse(numCloseVotesElement.TextContent);
+
+            var numReopenVotes = 0;
+            var numReopenVotesElement = parser.Result.QuerySelector(".close-question-link[data-isclosed='true'] .existing-flag-count");
+            if (!string.IsNullOrWhiteSpace(numReopenVotesElement?.TextContent))
+                numReopenVotes = int.Parse(numReopenVotesElement.TextContent);
 
             var requireCloseVoteDetails = false;
             if (!isClosed && numCloseVotes > 0)
@@ -125,6 +188,12 @@ namespace Core
             return new QuestionModel
             {
                 Closed = isClosed,
+                Deleted = isDeleted,
+                Asked = asked,
+                DeleteVotes = deleteVotes,
+                UndeleteVotes = undeleteVotes,
+                ReopenVotes = numReopenVotes,
+                DuplicateParentId = dupeParent,
                 Title = title,
                 Id = questionId,
                 Tags = tags.ToList(),

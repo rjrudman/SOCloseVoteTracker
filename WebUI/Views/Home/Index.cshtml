@@ -1,0 +1,249 @@
+﻿@{
+    Layout = null;
+}
+
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <style type="text/css">
+        .options {
+            padding: 5px;
+        }
+        input[type="text"] {
+            height: 30px;
+            padding-bottom: 3px;
+        }
+        .filterName {
+            width: 70px;
+        }
+        .optionItem {
+            padding: 10px;
+        }
+
+        #cover {
+    background: url("http://www.aveva.com/Images/ajax-loader.gif") no-repeat scroll center center #FFF;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+    </style>
+</head>
+<body>
+
+    <div id="cover" style="display: none; z-index: 999"></div>
+<div class="container" style="margin-top: 20px">
+    <a href="https://github.com/rjrudman/SOCloseVoteTracker">
+        <svg height="28" version="1.1" viewBox="0 0 16 16" width="28"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59 0.4 0.07 0.55-0.17 0.55-0.38 0-0.19-0.01-0.82-0.01-1.49-2.01 0.37-2.53-0.49-2.69-0.94-0.09-0.23-0.48-0.94-0.82-1.13-0.28-0.15-0.68-0.52-0.01-0.53 0.63-0.01 1.08 0.58 1.23 0.82 0.72 1.21 1.87 0.87 2.33 0.66 0.07-0.52 0.28-0.87 0.51-1.07-1.78-0.2-3.64-0.89-3.64-3.95 0-0.87 0.31-1.59 0.82-2.15-0.08-0.2-0.36-1.02 0.08-2.12 0 0 0.67-0.21 2.2 0.82 0.64-0.18 1.32-0.27 2-0.27 0.68 0 1.36 0.09 2 0.27 1.53-1.04 2.2-0.82 2.2-0.82 0.44 1.1 0.16 1.92 0.08 2.12 0.51 0.56 0.82 1.27 0.82 2.15 0 3.07-1.87 3.75-3.65 3.95 0.29 0.25 0.54 0.73 0.54 1.48 0 1.07-0.01 1.93-0.01 2.2 0 0.21 0.15 0.46 0.55 0.38C13.71 14.53 16 11.53 16 8 16 3.58 12.42 0 8 0z"></path></svg>
+        Open Source
+    </a>
+    <br/>
+    <br/>
+    <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#Interface" aria-controls="Interface" role="tab" data-toggle="tab">Interface</a></li>
+        <li role="presentation"><a href="#RawSQL" aria-controls="RawSQL" role="tab" data-toggle="tab">Raw SQL</a></li>
+    </ul>
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="Interface">
+            <div class="options">
+                <div class="optionItem">
+                    <label class="filterName">Tags</label>
+                    <input id="txtTags" type="text"/>
+                    <div id="tags" class="btn-group" data-toggle="buttons"></div>
+                </div>
+                <div class="optionItem">
+                    <label class="filterName">Closed</label>
+                    <div id="closed" class="btn-group" data-toggle="buttons"> </div>
+                </div>
+                <div class="optionItem">
+                    <label class="filterName">Votes</label>
+
+                    <div id="voteCount" class="btn-group" data-toggle="buttons"> </div>
+                    <div id="voteCountCompare" class="btn-group" data-toggle="buttons"> </div>
+                </div>
+
+                <div class="optionItem">
+                    <label class="filterName">Close Reason</label><br/>
+                    <div id="closeReasonGroup" class="btn-group" data-toggle="buttons"> </div>
+                </div>
+
+                <br/>
+                <button id="submit" type="submit" class="btn btn-default">Submit</button>
+
+                <table id="simpleTable" class="table"></table>
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="RawSQL">
+            <div style="padding: 15px;">
+                Yes! You can run raw SQL! <a href="/DatabaseDiagram.png">Click here</a> to see the database diagram <br/><br/>
+                <b>Server:</b> soclosevotetracker.database.windows.net,1433<br/>
+                <b>Username:</b> SOCVRReadonly<br/>
+                <b>Password:</b> 30QITGxS69dpd6aPRlr5mb7pkMvtAv<br/>
+                <b>ADO.NET connection string:</b><br/> Server=tcp:soclosevotetracker.database.windows.net,1433;Database=SOCloseVoteTrackerDB;User ID=SOCVRReadonly;Password=30QITGxS69dpd6aPRlr5mb7pkMvtAv;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;<br/>
+            </div>
+
+            <textarea id="txtSql" style="width: 100%; height: 600px">SELECT TOP 100
+Id as [QuestionID], Title, Closed, LastUpdated, COUNT(*) as NumVotes
+FROM QUESTIONS
+LEFT JOIN QuestionVotes on QuestionVotes.QuestionId = Questions.Id
+WHERE Closed = 0
+GROUP BY Questions.Id, Questions.Title,Questions.LastUpdated,Questions.Closed
+ORDER BY COUNT(*) DESC</textarea>
+
+            <button id="submitSql" type="submit" class="btn btn-default">Submit</button>
+
+            <table id="dynamicTable" class="table"></table>
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+    $(function() {
+        var tags = [
+            { Value: 1, Text: 'Any Tags', Default: true },
+            { Value: 2, Text: 'All Tags' }
+        ];
+        fillOptions($('#tags'), 'tags', tags);
+
+        var closed = [
+            { Value: 1, Text: 'No', Default: true },
+            { Value: 2, Text: 'Yes' },
+            { Value: 0, Text: 'Any' }
+        ];
+        fillOptions($('#closed'), 'closed', closed);
+
+        var voteCount = [
+            { Value: 0, Text: '0' },
+            { Value: 1, Text: '1' },
+            { Value: 2, Text: '2' },
+            { Value: 3, Text: '3' },
+            { Value: 4, Text: '4', Default: true },
+            { Value: 5, Text: '5' }
+        ];
+        fillOptions($('#voteCount'), 'voteCount', voteCount);
+
+        var voteCountCompare = [
+            { Value: 1, Text: '==', Default: true },
+            { Value: 2, Text: '!=' },
+            { Value: 3, Text: '<' },
+            { Value: 4, Text: '<=' },
+            { Value: 5, Text: '>' },
+            { Value: 6, Text: '>=' }
+        ];
+        fillOptions($('#voteCountCompare'), 'voteCountCompare', voteCountCompare);
+
+        var closeReasons = [
+            { Value: 0, Text: 'Any', Default: true },
+            { Value: 1000, Text: 'Duplicate' },
+            { Value: 1001, Text: 'Unclear' },
+            { Value: 1002, Text: 'Broad' },
+            { Value: 1003, Text: 'Opinion Based' },
+            { Value: 4, Text: 'Hardware/Software' },
+            { Value: 7, Text: 'Server/Network' },
+            { Value: 16, Text: 'Offsite Resource' },
+            { Value: 13, Text: 'No MCVE' },
+            { Value: 11, Text: 'Typo' },
+            { Value: 2, Text: 'Migration' },
+            { Value: 3, Text: 'Other' }
+        ];
+        fillOptions($('#closeReasonGroup'), 'closeReason', closeReasons);
+
+        $('#submit').click(makeRequest);
+        $('#submitSql').click(makeSqlRequest);
+    });
+
+    function fillOptions(group, groupName, options) {
+
+        group.empty();
+        for (var i = 0; i < options.length; i++) {
+            var option = options[i];
+            var value = option.Value;
+            var text = option.Text;
+            var defaultSelected = option.Default;
+
+            var element = $('<label class="btn btn-primary ' + (defaultSelected ? 'active' : '') + '"> <input type="radio" name="' + groupName + '" value="' + value + '" autocomplete="off" ' + (defaultSelected ? 'checked' : '') + '>' + text + '</label>');
+            group.append(element);
+        }
+    }
+
+    function renderTable(table, data) {
+        table.empty();
+        var headers = [];
+        var i;
+        for (i = 0; i < data.length; i++) {
+            var row = data[i];
+            if (i === 0) {
+                for (var property in row) {
+                    if (row.hasOwnProperty(property)) {
+                        headers.push(property);
+                    }
+                }
+            }
+        }
+        var head = $('<thead>');
+        var headRow = $('<tr>');
+        for (i = 0; i < headers.length; i++) {
+            headRow.append('<td>' + headers[i] + '</td>');
+        }
+
+        var body = $('<tbody>');
+        for (i = 0; i < data.length; i++) {
+            var htmlRow = $('<tr>');
+            for (var j = 0; j < headers.length; j++) {
+                var headerName = headers[j];
+                var dataItem = data[i][headerName];
+                if (headerName.toLowerCase() === 'questionid') {
+                    htmlRow.append('<td><a href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + dataItem + '">' + dataItem + '</a></td>');
+                } else {
+                    htmlRow.append('<td>' + dataItem + "</td>");
+                }
+
+            }
+            body.append(htmlRow);
+        }
+
+        head.append(headRow);
+        table.append(head);
+        table.append(body);
+    }
+
+    function makeRequest() {
+        var tags = $('#txtTags').val();
+        var tagSearchType = $('[name="tags"]:checked').val();
+
+        var closed = $('[name="closed"]:checked').val();
+
+        var voteCount = $('[name="voteCount"]:checked').val();
+        var voteCountCompare = $('[name="voteCountCompare"]:checked').val();
+
+        var closeReason = $('[name="closeReason"]:checked').val();
+
+        var requestData = {
+            TagSearch: tags,
+            TagSearchType: tagSearchType,
+            Closed: closed,
+            VoteCount: voteCount,
+            VoteCountCompare: voteCountCompare,
+            CloseReason: closeReason
+        };
+        $('#cover').fadeIn();
+        $.post('/Home/SearchData', requestData, function(results) {
+            renderTable($('#simpleTable'), results);
+            $('#cover').fadeOut();
+        });
+    }
+
+    function makeSqlRequest() {
+        var sql = $('#txtSql').val();
+        $('#cover').fadeIn();
+        $.post('/Home/RunSQL', { sql: sql }, function(results) {
+            renderTable($('#dynamicTable'), results);
+            $('#cover').fadeOut();
+        });
+    }
+
+</script>
+</body>
+</html>

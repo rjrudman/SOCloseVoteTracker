@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
 using System.Linq;
 using Core.Models;
 using Core.Sockets;
 using Dapper;
 using Data;
+using Data.Entities;
 using Data.Migrations;
 using Hangfire;
 
@@ -16,12 +18,12 @@ namespace Core.Workers
         const string UPSERT_QUESTION_SQL = @"
 IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @Id)
 BEGIN
-    INSERT INTO Questions(Id, Closed, Title, LastUpdated) VALUES (@Id, @Closed, @Title, GETUTCDATE())
+    INSERT INTO Questions(Id, Closed, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, DuplicateParentId, Asked, Title, LastUpdated) VALUES (@Id, @Closed, @Deleted, @DeleteVotes, @UndeleteVotes, @ReopenVotes, @DuplicateParentId, @Asked, @Title, GETUTCDATE())
 END
 ELSE
 BEGIN
     UPDATE Questions
-    SET Closed = @Closed, Title = @Title, LastUpdated = GETUTCDATE()
+    SET Closed = @Closed, Deleted = @Deleted, DeleteVotes = @DeleteVotes, UndeleteVotes = @UndeleteVotes, ReopenVotes = @ReopenVotes, DuplicateParentId = @DuplicateParentId, Asked = @Asked, Title = @Title, LastUpdated = GETUTCDATE()
     WHERE Id = @Id
 END
 ";
@@ -32,9 +34,9 @@ BEGIN
 END
 ";
         const string UPSERT_QUESTION_TAG_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM QuestionTags with (XLOCK, ROWLOCK) WHERE QuestionID = @questionID AND TagId = @tagName)
+IF NOT EXISTS (SELECT NULL FROM QuestionTags with (XLOCK, ROWLOCK) WHERE QuestionID = @questionID AND TagName = @tagName)
 BEGIN
-    INSERT INTO QuestionTags(QuestionID, TagId) VALUES (@questionID, @tagName)
+    INSERT INTO QuestionTags(QuestionID, TagName) VALUES (@questionID, @tagName)
 END
 ";
 
@@ -50,17 +52,20 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
 
-            //Every 5 minutes
-            RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "*/5 * * * *");
-            RecurringJob.AddOrUpdate(() => GetRecentCloseVoteReviews(), "*/5 * * * *");
-            //Every hour
-            RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
+            if (!Utils.Configuration.DisablePolling)
+            {
+                //Every 5 minutes
+                RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => GetRecentCloseVoteReviews(), "*/5 * * * *");
+                //Every hour
+                RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
 
-            PollFrontPage();
+                PollFrontPage();
 
-            Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+                Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+            }
         }
 
         public static void CheckCVPls()
@@ -74,9 +79,8 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                         .Select(r => r.QuestionId)
                         .ToList();
 
-                var now = DateTime.Now;
                 foreach (var questionId in questionIdsToCheck)
-                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
+                    QueueQuestionQuery(questionId);
             }
         }
 
@@ -89,7 +93,8 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         {
             ActiveQuestionsPoller.Register(question =>
             {
-                BackgroundJob.Schedule(() => QueryQuestion((int)question.ID, DateTime.Now),TimeSpan.FromMinutes(10));
+                if (question.SiteBaseHostAddress == "stackoverflow.com")
+                    QueueQuestionQuery((int) question.ID, TimeSpan.FromMinutes(15));
             });
         }
 
@@ -112,27 +117,55 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         {
             var now = DateTime.Now;
             foreach(var questionId in questionIds)
-                BackgroundJob.Enqueue(() => QueryQuestion(questionId, now));
+                QueueQuestionQuery(questionId);
+        }
+
+        public static void QueueQuestionQuery(int questionId, TimeSpan? after = null)
+        {
+            using (var con = DataContext.PlainConnection())
+                QueueQuestionQuery(con, questionId, after);
+        }
+
+        public static void QueueQuestionQuery(IDbConnection con, int questionId, TimeSpan? after = null)
+        {
+            using (var trans = con.BeginTransaction())
+            {
+                var newQueueTime = DateTime.Now;
+                if (after.HasValue)
+                    newQueueTime = newQueueTime.Add(after.Value);
+
+                var nextQueueTime = con.Query<DateTime?>("SELECT MIN(ProcessTime) FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id", new {id = questionId}, trans).FirstOrDefault();
+                if (nextQueueTime != null && nextQueueTime.Value < newQueueTime)
+                    return;
+
+                con.Execute("INSERT INTO QueuedQuestionQueries(QuestionId, ProcessTime) VALUES (@id, @newQueueTime)", new {newQueueTime = newQueueTime, id = questionId}, trans);
+                trans.Commit();
+
+                if (after == null)
+                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now));
+                else
+                    BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), after.Value);
+            }
+
         }
 
         public static void QueryQuestion(int questionId, DateTime dateRequested)
         {
             var connecter = new StackOverflowConnecter();
-            using (var context = new DataContext())
+            using (var con = DataContext.PlainConnection())
             {
-                var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                if (existingQuestion != null)
+                using (var trans = con.BeginTransaction())
                 {
-                    //If it was updated after the request, or the latest modification was less than 5 minutes ago, we requeue it for later
-                    if (existingQuestion.LastUpdated >= dateRequested
-                        || (existingQuestion.LastUpdated - DateTime.Now < TimeSpan.FromMinutes(5)))
-                    {
-                        //Requeue it for an hour
-                        BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), TimeSpan.FromHours(1));
-                    }
+                    con.Execute("DELETE FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id AND ProcessTime <= @processTime", new { id = questionId, processTime = DateTime.Now }, trans);
+                    trans.Commit();
                 }
-                    
+
+                var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
+                var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new { id = questionId }).FirstOrDefault();
+                if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
+                    return;
             }
+
             var question = connecter.GetQuestionInformation(questionId);
             if (question != null)
                 UpsertQuestionInformation(question);
@@ -140,15 +173,18 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
         private static void UpsertQuestionInformation(QuestionModel question)
         {
+            var newCloseVotesFound = false;
+            Question existingQuestion;
             using (var context = new DataContext())
             {
                 var connection = context.Database.Connection;
                 connection.Open();
+
                 using (var trans = connection.BeginTransaction())
                 {
                     context.Database.UseTransaction(trans);
 
-                    var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
+                    existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
                     var existingVotes = existingQuestion?.QuestionVotes
                         .GroupBy(ev => ev.VoteTypeId)
                         .ToDictionary(g => g.Key, g => g.Count()) ?? new Dictionary<int, int>();
@@ -161,7 +197,6 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                         connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
                     }
 
-                    var newCloseVotesFound = false;
                     foreach (var voteGroup in question.CloseVotes)
                     {
                         int numToInsert;
@@ -176,30 +211,29 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                             newCloseVotesFound = true;
                         }
                     }
-                    if (newCloseVotesFound)
-                    {
-                        if (existingQuestion != null)
-                        {
-                            var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
-                            if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
-                                BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(1));
-                            else if (timeSinceLastUpdated < TimeSpan.FromHours(4))
-                                BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(5));
-                            else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
-                                BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(24));
-                        }
-                    }
-                    else
-                    {
-                        if (existingQuestion == null)
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromMinutes(10));
-                        else if ((existingQuestion.LastUpdated - DateTime.Now) <= TimeSpan.FromHours(23))
-                            BackgroundJob.Schedule(() => QueryQuestion(question.Id, DateTime.Now), TimeSpan.FromHours(15));
-                    }
 
                     trans.Commit();
                 }
             }
+            
+            //New activity
+            if (newCloseVotesFound || existingQuestion == null)
+                QueueQuestionQuery(question.Id, TimeSpan.FromMinutes(15));
+            else
+            {
+                //No new activity. Keep checking it less and less often, after about a day it will fall off the queue if no new close votes are found.
+
+                var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
+                if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(1));
+                else if (timeSinceLastUpdated < TimeSpan.FromHours(1))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(2));
+                else if (timeSinceLastUpdated < TimeSpan.FromHours(2))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(3));
+                else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
+                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(24));
+            }
+
         }
     }
 }

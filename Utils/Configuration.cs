@@ -43,6 +43,8 @@ namespace Utils
 
         public static string ChatRoomURL { get; private set; }
 
+        public static bool DisablePolling { get; private set; }
+
         public static string ProxyUrl { get; private set; }
         public static string ProxyUsername { get; private set; }
         public static string ProxyPassword { get; private set; }

@@ -87,6 +87,34 @@
     <Compile Include="Migrations\201604010401366_TrackWebRequests.Designer.cs">
       <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604011140557_FlagQuestionsAsBeingQueued.cs" />
+    <Compile Include="Migrations\201604011140557_FlagQuestionsAsBeingQueued.Designer.cs">
+      <DependentUpon>201604011140557_FlagQuestionsAsBeingQueued.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604011223254_UseTimestampForEnqueingQuestions.cs" />
+    <Compile Include="Migrations\201604011223254_UseTimestampForEnqueingQuestions.Designer.cs">
+      <DependentUpon>201604011223254_UseTimestampForEnqueingQuestions.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604011235372_TrackQuestionQueriesProperly.cs" />
+    <Compile Include="Migrations\201604011235372_TrackQuestionQueriesProperly.Designer.cs">
+      <DependentUpon>201604011235372_TrackQuestionQueriesProperly.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604020432445_FixQuestionTagsColumnName.cs" />
+    <Compile Include="Migrations\201604020432445_FixQuestionTagsColumnName.Designer.cs">
+      <DependentUpon>201604020432445_FixQuestionTagsColumnName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs" />
+    <Compile Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.Designer.cs">
+      <DependentUpon>201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604020746519_TrackDeletesAndUndeletes.cs" />
+    <Compile Include="Migrations\201604020746519_TrackDeletesAndUndeletes.Designer.cs">
+      <DependentUpon>201604020746519_TrackDeletesAndUndeletes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604020756343_TrackReopenVotes.cs" />
+    <Compile Include="Migrations\201604020756343_TrackReopenVotes.Designer.cs">
+      <DependentUpon>201604020756343_TrackReopenVotes.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -112,6 +140,27 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604010401366_TrackWebRequests.resx">
       <DependentUpon>201604010401366_TrackWebRequests.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604011140557_FlagQuestionsAsBeingQueued.resx">
+      <DependentUpon>201604011140557_FlagQuestionsAsBeingQueued.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604011223254_UseTimestampForEnqueingQuestions.resx">
+      <DependentUpon>201604011223254_UseTimestampForEnqueingQuestions.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604011235372_TrackQuestionQueriesProperly.resx">
+      <DependentUpon>201604011235372_TrackQuestionQueriesProperly.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020432445_FixQuestionTagsColumnName.resx">
+      <DependentUpon>201604020432445_FixQuestionTagsColumnName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.resx">
+      <DependentUpon>201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020746519_TrackDeletesAndUndeletes.resx">
+      <DependentUpon>201604020746519_TrackDeletesAndUndeletes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020756343_TrackReopenVotes.resx">
+      <DependentUpon>201604020756343_TrackReopenVotes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

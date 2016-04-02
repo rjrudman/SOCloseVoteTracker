@@ -17,7 +17,9 @@ namespace Data
         public static IDbConnection PlainConnection()
         {
             var connectionString = ConfigurationManager.ConnectionStrings[CONNECTION_STRING_NAME].ConnectionString;
-            return new SqlConnection(connectionString);
+            var connection = new SqlConnection(connectionString);
+            connection.Open();
+            return connection;
         }
 
         public DataContext() : base("DBConnectionString") { }
@@ -43,7 +45,7 @@ namespace Data
                 .WithMany(t => t.Questions)
                 .Map(m => 
                     m.MapLeftKey("QuestionId")
-                     .MapRightKey("TagId")
+                     .MapRightKey("TagName")
                      .ToTable("QuestionTags")
                 );
 

@@ -35,7 +35,7 @@ namespace Core
                 throttler.Request.AddParameter("password", _password);
 
                 var response = throttler.Execute();
-
+                
                 _authCookies.AddRange(response.Cookies);
                 _refreshCookieTime = _authCookies.Min(ac => ac.Expires);
             }
