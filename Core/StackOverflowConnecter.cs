@@ -98,10 +98,10 @@ namespace Core
 
             parser.Parse();
 
-            var actualId = parser.Result.QuerySelector("#question-header a");
-            if (actualId != null)
+            var idElement = parser.Result.QuerySelector("meta[property='og: url']");
+            if (idElement != null)
             {
-                var url = actualId.GetAttribute("href");
+                var url = idElement.GetAttribute("content");
 
                 var match = _questionIdRegex.Match(url);
                 var id = int.Parse(match.Groups["questionID"].Value);

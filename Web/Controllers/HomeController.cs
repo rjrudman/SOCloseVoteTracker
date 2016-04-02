@@ -22,5 +22,11 @@ namespace Web.Controllers
 
             return new HttpStatusCodeResult(HttpStatusCode.OK);
         }
+
+        public ActionResult EnqueueAndRedirect(int questionId)
+        {
+            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(10));
+            return Redirect($"http://stackoverflow.com/q/{questionId}");
+        }
     }
 }

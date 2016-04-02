@@ -194,7 +194,7 @@ ORDER BY COUNT(*) DESC</textarea>
                 var headerName = headers[j];
                 var dataItem = data[i][headerName];
                 if (headerName === 'QuestionID') {
-                    htmlRow.append('<td><a href="http://stackoverflow.com/questions/' + dataItem + '">' + dataItem + '</a></td>');
+                    htmlRow.append('<td><a href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + dataItem + '">' + dataItem + '</a></td>');
                 } else {
                     htmlRow.append('<td>' + dataItem + "</td>");
                 }

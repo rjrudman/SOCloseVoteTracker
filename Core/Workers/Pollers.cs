@@ -34,9 +34,9 @@ BEGIN
 END
 ";
         const string UPSERT_QUESTION_TAG_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM QuestionTags with (XLOCK, ROWLOCK) WHERE QuestionID = @questionID AND TagId = @tagName)
+IF NOT EXISTS (SELECT NULL FROM QuestionTags with (XLOCK, ROWLOCK) WHERE QuestionID = @questionID AND TagName = @tagName)
 BEGIN
-    INSERT INTO QuestionTags(QuestionID, TagId) VALUES (@questionID, @tagName)
+    INSERT INTO QuestionTags(QuestionID, TagName) VALUES (@questionID, @tagName)
 END
 ";
 
