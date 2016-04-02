@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
+using Data;
+using Data.Entities;
 
 namespace WebUI.Controllers
 {
@@ -13,18 +13,78 @@ namespace WebUI.Controllers
             return View();
         }
 
-        public ActionResult About()
+        public class SearchQuery
         {
-            ViewBag.Message = "Your application description page.";
-
-            return View();
+            public string TagSearch { get; set; }
+            public int TagSearchType { get; set; }
+            public int Closed { get; set; }
+            public int VoteCount { get; set; }
+            public int VoteCountCompare { get; set; }
+            public int CloseReason { get; set; }
         }
 
-        public ActionResult Contact()
+        [HttpPost]
+        public ActionResult SearchData(SearchQuery query)
         {
-            ViewBag.Message = "Your contact page.";
+            if (query == null)
+                return Json(new object[0]);
 
-            return View();
+            using (var context = new DataContext())
+            {
+                IQueryable<Question> dataQuery = context.Questions;
+                var tags = query.TagSearch?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                if (tags?.Any() ?? false)
+                {
+                    if (query.TagSearchType == 1) //Any of the tags
+                        dataQuery = dataQuery.Where(q => q.Tags.Any(t => tags.Contains(t.TagName)));
+                    else
+                    {
+                        foreach(var tag in tags)
+                            dataQuery = dataQuery.Where(q => q.Tags.Any(t => t.TagName == tag));
+                    }
+                }
+
+                if (query.Closed == 1)
+                    dataQuery = dataQuery.Where(q => !q.Closed);
+                else if (query.Closed == 2)
+                    dataQuery = dataQuery.Where(q => q.Closed);
+
+                if (query.VoteCountCompare == 1)
+                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count == query.VoteCount);
+                else if (query.VoteCountCompare == 2)
+                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count != query.VoteCount);
+                else if (query.VoteCountCompare == 3)
+                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count < query.VoteCount);
+                else if (query.VoteCountCompare == 4)
+                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count <= query.VoteCount);
+                else if (query.VoteCountCompare == 5)
+                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count > query.VoteCount);
+                else if (query.VoteCountCompare == 6)
+                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count >= query.VoteCount);
+
+                if (query.CloseReason > 0)
+                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Any(qv => qv.VoteTypeId == query.CloseReason));
+
+                var result = dataQuery
+                    .Select(q => new
+                    {
+                        q.Id,
+                        q.Title,
+                        q.Closed, q.LastUpdated,
+                        VoteCount = q.QuestionVotes.Count()
+                    })
+                    .ToList()
+                    .Select(q => new
+                    {
+                        QuestionID = q.Id,
+                        q.Title,
+                        q.Closed,
+                        LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
+                        q.VoteCount
+                    });
+
+                return Json(result);
+            }
         }
     }
 }

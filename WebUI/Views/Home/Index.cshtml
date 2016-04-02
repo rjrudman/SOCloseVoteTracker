@@ -26,7 +26,7 @@
     <div class="options">
         <div class="optionItem">
             <label class="filterName">Tags</label>
-            <input type="text"/>
+            <input id="txtTags" type="text"/>
             <div id="tags" class="btn-group" data-toggle="buttons"></div>
         </div>
         <div class="optionItem">
@@ -46,7 +46,7 @@
         </div>
 
         <br/>
-        <button type="submit" class="btn btn-default">Submit</button>
+        <button id="submit" type="submit" class="btn btn-default">Submit</button>
 
         <table id="simpleTable" class="table"></table>
     </div>
@@ -58,25 +58,25 @@
 <script type="text/javascript">
     $(function () {
         var tags = [
-            { Value: 1, Text: 'All Tags', Default: true },
-            { Value: 2, Text: 'Any Tags' }
+            { Value: 1, Text: 'Any Tags', Default: true },
+            { Value: 2, Text: 'All Tags' }
         ];
         fillOptions($('#tags'), 'tags', tags);
 
         var closed = [
             { Value: 1, Text: 'No', Default: true },
             { Value: 2, Text: 'Yes' },
-            { Value: 3, Text: 'Any' }
+            { Value: 0, Text: 'Any' }
         ];
         fillOptions($('#closed'), 'closed', closed);
 
         var voteCount = [
-            { Value: 1, Text: '0' },
-            { Value: 2, Text: '1' },
-            { Value: 3, Text: '2' },
-            { Value: 4, Text: '3' },
-            { Value: 5, Text: '4', Default: true },
-            { Value: 6, Text: '5' }
+            { Value: 0, Text: '0' },
+            { Value: 1, Text: '1' },
+            { Value: 2, Text: '2' },
+            { Value: 3, Text: '3' },
+            { Value: 4, Text: '4', Default: true },
+            { Value: 5, Text: '5' }
         ];
         fillOptions($('#voteCount'), 'voteCount', voteCount);
 
@@ -105,6 +105,8 @@
             { Value: 3, Text: 'Other' }
         ];
         fillOptions($('#closeReasonGroup'), 'closeReason', closeReasons);
+
+        $('#submit').click(makeRequest);
     });
 
     function fillOptions(group, groupName, options) {
@@ -145,8 +147,14 @@
         for (i = 0; i < data.length; i++) {
             var htmlRow = $('<tr>');
             for (var j = 0; j < headers.length; j++) {
-                var dataItem = data[i][headers[j]];
-                htmlRow.append('<td>' + dataItem + "</td>");
+                var headerName = headers[j];
+                var dataItem = data[i][headerName];
+                if (headerName === 'QuestionID') {
+                    htmlRow.append('<td><a href="http://stackoverflow.com/questions/' + dataItem + '">' + dataItem + '</a></td>');
+                } else {
+                    htmlRow.append('<td>' + dataItem + "</td>");
+                }
+                
             }
             body.append(htmlRow);
         }
@@ -156,25 +164,31 @@
         table.append(body);
     }
 
-    $('.btn-toggle').click(function () {
-        $(this).find('.btn').toggleClass('active');
+    function makeRequest() {
+        var tags = $('#txtTags').val();
+        var tagSearchType = $('[name="tags"]:checked').val();
 
-        if ($(this).find('.btn-primary').size() > 0) {
-            $(this).find('.btn').toggleClass('btn-primary');
-        }
-        if ($(this).find('.btn-danger').size() > 0) {
-            $(this).find('.btn').toggleClass('btn-danger');
-        }
-        if ($(this).find('.btn-success').size() > 0) {
-            $(this).find('.btn').toggleClass('btn-success');
-        }
-        if ($(this).find('.btn-info').size() > 0) {
-            $(this).find('.btn').toggleClass('btn-info');
-        }
+        var closed = $('[name="closed"]:checked').val();
 
-        $(this).find('.btn').toggleClass('btn-default');
+        var voteCount = $('[name="voteCount"]:checked').val();
+        var voteCountCompare = $('[name="voteCountCompare"]:checked').val();
 
-    });
+        var closeReason = $('[name="closeReason"]:checked').val();
+
+        var requestData = {
+            TagSearch: tags,
+            TagSearchType: tagSearchType,
+            Closed: closed,
+            VoteCount: voteCount,
+            VoteCountCompare: voteCountCompare,
+            CloseReason: closeReason
+        };
+
+        $.post('/Home/SearchData', requestData, function(results) {
+            renderTable($('#simpleTable'), results);
+        });
+    }
+
 </script>
 </body>
 </html>
