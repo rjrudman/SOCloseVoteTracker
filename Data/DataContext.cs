@@ -45,7 +45,7 @@ namespace Data
                 .WithMany(t => t.Questions)
                 .Map(m => 
                     m.MapLeftKey("QuestionId")
-                     .MapRightKey("TagId")
+                     .MapRightKey("TagName")
                      .ToTable("QuestionTags")
                 );
 

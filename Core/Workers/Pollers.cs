@@ -62,7 +62,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
             PollFrontPage();
 
-          //  Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+            Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
         }
 
         public static void CheckCVPls()

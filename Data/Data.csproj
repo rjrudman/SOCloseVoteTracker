@@ -99,6 +99,10 @@
     <Compile Include="Migrations\201604011235372_TrackQuestionQueriesProperly.Designer.cs">
       <DependentUpon>201604011235372_TrackQuestionQueriesProperly.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604020432445_FixQuestionTagsColumnName.cs" />
+    <Compile Include="Migrations\201604020432445_FixQuestionTagsColumnName.Designer.cs">
+      <DependentUpon>201604020432445_FixQuestionTagsColumnName.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -133,6 +137,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604011235372_TrackQuestionQueriesProperly.resx">
       <DependentUpon>201604011235372_TrackQuestionQueriesProperly.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020432445_FixQuestionTagsColumnName.resx">
+      <DependentUpon>201604020432445_FixQuestionTagsColumnName.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
