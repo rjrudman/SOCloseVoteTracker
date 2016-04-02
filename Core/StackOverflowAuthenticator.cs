@@ -13,10 +13,15 @@ namespace Core
         private readonly string _username;
         private readonly string _password;
 
-        private DateTime _refreshCookieTime = DateTime.MinValue;
-        private readonly List<RestResponseCookie> _authCookies = new List<RestResponseCookie>();
+        private static DateTime _refreshCookieTime = DateTime.MinValue;
+        private static readonly List<RestResponseCookie> AuthCookies = new List<RestResponseCookie>();
+        private static readonly object CookieLocker = new object();
 
-        private bool CurrentAuthCookiesValid() => _refreshCookieTime > DateTime.Now;
+        private static bool CurrentAuthCookiesValid()
+        {
+            lock(CookieLocker)
+                return _refreshCookieTime > DateTime.Now;
+        }
 
         public StackOverflowAuthenticator(string username, string password)
         {
@@ -24,23 +29,26 @@ namespace Core
             _password = password;
         }
 
-        private IEnumerable<RestResponseCookie> GetAuthCookies()
+        private IList<RestResponseCookie> GetAuthCookies()
         {
-            if (!CurrentAuthCookiesValid())
+            lock (CookieLocker)
             {
-                var throttler = new RestRequestThrottler(BASE_URL, "users/login", Method.POST);
-                throttler.Client.FollowRedirects = false;
+                if (!CurrentAuthCookiesValid())
+                {
+                    var throttler = new RestRequestThrottler(BASE_URL, "users/login", Method.POST);
+                    throttler.Client.FollowRedirects = false;
 
-                throttler.Request.AddParameter("email", _username);
-                throttler.Request.AddParameter("password", _password);
+                    throttler.Request.AddParameter("email", _username);
+                    throttler.Request.AddParameter("password", _password);
 
-                var response = throttler.Execute();
-                
-                _authCookies.AddRange(response.Cookies);
-                _refreshCookieTime = _authCookies.Min(ac => ac.Expires);
+                    var response = throttler.Execute();
+
+                    AuthCookies.AddRange(response.Cookies);
+                    _refreshCookieTime = AuthCookies.Min(ac => ac.Expires);
+                }
+
+                return AuthCookies.ToList();
             }
-
-            return _authCookies;
         }
 
         public void AuthenticateRequest(IRestRequest request)
