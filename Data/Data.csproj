@@ -107,6 +107,14 @@
     <Compile Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.Designer.cs">
       <DependentUpon>201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604020746519_TrackDeletesAndUndeletes.cs" />
+    <Compile Include="Migrations\201604020746519_TrackDeletesAndUndeletes.Designer.cs">
+      <DependentUpon>201604020746519_TrackDeletesAndUndeletes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604020756343_TrackReopenVotes.cs" />
+    <Compile Include="Migrations\201604020756343_TrackReopenVotes.Designer.cs">
+      <DependentUpon>201604020756343_TrackReopenVotes.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -147,6 +155,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604020553311_TrackAskedTimeDeletionsAndDupeParents.resx">
       <DependentUpon>201604020553311_TrackAskedTimeDeletionsAndDupeParents.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020746519_TrackDeletesAndUndeletes.resx">
+      <DependentUpon>201604020746519_TrackDeletesAndUndeletes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604020756343_TrackReopenVotes.resx">
+      <DependentUpon>201604020756343_TrackReopenVotes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -11,6 +11,10 @@ namespace Core.Models
         public bool Closed { get; set; }
         public bool Deleted { get; set; }
 
+        public int DeleteVotes { get; set; }
+        public int UndeleteVotes { get; set; }
+        public int ReopenVotes { get; set; }
+
         public int? DuplicateParentId { get; set; }
 
         public DateTime Asked { get; set; }

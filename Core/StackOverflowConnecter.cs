@@ -21,6 +21,8 @@ namespace Core
 
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
+        private readonly Regex _undeleteVoteCount = new Regex("^undelete \\((?<numVotes>\\d)\\)$");
+        private readonly Regex _deleteVoteCount = new Regex("^delete \\((?<numVotes>\\d)\\)$");
 
         private IList<int> GetCloseVoteQueue(string mode)
         {
@@ -124,6 +126,26 @@ namespace Core
 
             var isDeleted = parser.Result.QuerySelectorAll(".question-status b").Select(e => e.TextContent).Any(c => c == "deleted");
 
+            var deleteVotes = 0;
+            var deleteVotesElement = parser.Result.QuerySelector($"#delete-post-{questionId}");
+            if (deleteVotesElement != null)
+            {
+                var content = deleteVotesElement.TextContent;
+                var match = _deleteVoteCount.Match(content);
+                if (match.Success)
+                    deleteVotes = int.Parse(match.Groups["numVotes"].Value);
+            }
+
+            var undeleteVotes = 0;
+            var undeleteVotesElement = parser.Result.QuerySelector(".deleted-post");
+            if (undeleteVotesElement != null)
+            {
+                var content = undeleteVotesElement.TextContent;
+                var match = _undeleteVoteCount.Match(content);
+                if (match.Success)
+                    undeleteVotes = int.Parse(match.Groups["numVotes"].Value);
+            }
+
             var askedStr = parser.Result.QuerySelector(".postcell .post-signature .relativetime").GetAttribute("title");
             var asked = DateTime.ParseExact(askedStr, "yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture).ToUniversalTime();
 
@@ -137,11 +159,16 @@ namespace Core
                 dupeParent = int.Parse(match.Groups["questionID"].Value);
                 Pollers.QueryQuestion(dupeParent.Value, DateTime.Now);
             }
-
+            
             var numCloseVotes = 0;
-            var existingFlagCount = parser.Result.QuerySelector(".existing-flag-count");
-            if (!string.IsNullOrWhiteSpace(existingFlagCount?.TextContent))
-                numCloseVotes = int.Parse(existingFlagCount.TextContent);
+            var numCloseVotesElement = parser.Result.QuerySelector(".close-question-link[data-isclosed='false'] .existing-flag-count");
+            if (!string.IsNullOrWhiteSpace(numCloseVotesElement?.TextContent))
+                numCloseVotes = int.Parse(numCloseVotesElement.TextContent);
+
+            var numReopenVotes = 0;
+            var numReopenVotesElement = parser.Result.QuerySelector(".close-question-link[data-isclosed='true'] .existing-flag-count");
+            if (!string.IsNullOrWhiteSpace(numReopenVotesElement?.TextContent))
+                numReopenVotes = int.Parse(numReopenVotesElement.TextContent);
 
             var requireCloseVoteDetails = false;
             if (!isClosed && numCloseVotes > 0)
@@ -163,6 +190,9 @@ namespace Core
                 Closed = isClosed,
                 Deleted = isDeleted,
                 Asked = asked,
+                DeleteVotes = deleteVotes,
+                UndeleteVotes = undeleteVotes,
+                ReopenVotes = numReopenVotes,
                 DuplicateParentId = dupeParent,
                 Title = title,
                 Id = questionId,

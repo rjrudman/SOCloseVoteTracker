@@ -18,12 +18,12 @@ namespace Core.Workers
         const string UPSERT_QUESTION_SQL = @"
 IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @Id)
 BEGIN
-    INSERT INTO Questions(Id, Closed, Deleted, DuplicateParentId, Asked, Title, LastUpdated) VALUES (@Id, @Closed, @Deleted, @DuplicateParentId, @Asked, @Title, GETUTCDATE())
+    INSERT INTO Questions(Id, Closed, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, DuplicateParentId, Asked, Title, LastUpdated) VALUES (@Id, @Closed, @Deleted, @DeleteVotes, @UndeleteVotes, @ReopenVotes, @DuplicateParentId, @Asked, @Title, GETUTCDATE())
 END
 ELSE
 BEGIN
     UPDATE Questions
-    SET Closed = @Closed, Deleted = @Deleted, DuplicateParentId = @DuplicateParentId, Asked = @Asked, Title = @Title, LastUpdated = GETUTCDATE()
+    SET Closed = @Closed, Deleted = @Deleted, DeleteVotes = @DeleteVotes, UndeleteVotes = @UndeleteVotes, ReopenVotes = @ReopenVotes, DuplicateParentId = @DuplicateParentId, Asked = @Asked, Title = @Title, LastUpdated = GETUTCDATE()
     WHERE Id = @Id
 END
 ";
