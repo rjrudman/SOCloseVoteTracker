@@ -115,7 +115,7 @@ namespace WebUI.Controllers
                     .Select(q => new
                     {
                         QuestionId = q.Id,
-                        Tags = string.Join(", ", q.Tags),
+                        Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Title,
                         q.Closed,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",

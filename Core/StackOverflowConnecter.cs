@@ -94,10 +94,12 @@ namespace Core
         public QuestionModel GetQuestionInformation(int questionId)
         {
             var throttler = new RestRequestThrottler(SITE_URL, $"questions/{questionId}", Method.GET, _authenticator);
-            
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
             if (response.StatusCode != HttpStatusCode.OK)
+                return null;
+
+            if (!response.ResponseUri.ToString().Contains("stackoverflow.com"))
                 return null;
 
             parser.Parse();
@@ -110,7 +112,7 @@ namespace Core
                 var match = _questionIdRegex.Match(url);
                 var id = int.Parse(match.Groups["questionID"].Value);
                 if (id != questionId)
-                    throw new Exception($"Question ID returned the wrong question: I queried {questionId} but got {id}");
+                    throw new Exception($"Question ID returned the wrong question: I queried {questionId} but got {id}. URL: {response.ResponseUri}");
             }
             else
             {
@@ -122,7 +124,7 @@ namespace Core
             var isClosed =
                 parser.Result.QuerySelectorAll(".question-status b")
                     .Select(e => e.TextContent)
-                    .Any(c => c == "put on hold" || c == "marked");
+                    .Any(c => c == "put on hold" || c == "marked" || c == "closed");
 
             var isDeleted = parser.Result.QuerySelectorAll(".question-status b").Select(e => e.TextContent).Any(c => c == "deleted");
 
