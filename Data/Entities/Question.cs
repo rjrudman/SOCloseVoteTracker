@@ -19,6 +19,8 @@ namespace Data.Entities
         public int UndeleteVotes { get; set; }
         public int ReopenVotes { get; set; }
 
+        public DateTime? LastTimeActive { get; set; }
+
         public DateTime? Asked { get; set; }
 
         [ForeignKey("CloseVoteTypeId")]
