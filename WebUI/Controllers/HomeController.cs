@@ -119,6 +119,7 @@ namespace WebUI.Controllers
                         q.LastUpdated,
                         VoteCount = q.QuestionVotes.Count()
                     })
+                    .Take(500)
                     .ToList()
                     .Select(q => new
                     {
