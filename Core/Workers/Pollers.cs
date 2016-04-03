@@ -104,31 +104,30 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
         public static void PollActiveQuestionsFifteenMins()
         {
-            PollActiveQuestions(TimeSpan.Zero, TimeSpan.FromMinutes(15));
+            PollActiveQuestions(TimeSpan.FromMinutes(15));
         }
 
         public static void PollActiveQuestionsHour()
         {
-            PollActiveQuestions(TimeSpan.FromMinutes(16), TimeSpan.FromMinutes(60));
+            PollActiveQuestions(TimeSpan.FromMinutes(60));
         }
 
         public static void PollActiveQuestionsFiveHours()
         {
-            PollActiveQuestions(TimeSpan.FromMinutes(61), TimeSpan.FromHours(5));
+            PollActiveQuestions(TimeSpan.FromHours(5));
         }
 
         public static void PollActiveQuestionsDay()
         {
-            PollActiveQuestions(TimeSpan.FromHours(5).Add(TimeSpan.FromMinutes(1)), TimeSpan.FromHours(24));
+            PollActiveQuestions(TimeSpan.FromHours(24));
         }
 
-        public static void PollActiveQuestions(TimeSpan startAgo, TimeSpan endAgo)
+        public static void PollActiveQuestions(TimeSpan timeLastActive)
         {
-            var startTime = DateTime.UtcNow.Subtract(endAgo);
-            var endTime = DateTime.UtcNow.Subtract(startAgo);
+            var timeActiveSeconds = timeLastActive.TotalSeconds;
             using (var con = DataContext.PlainConnection())
             {
-                var questionIds = con.Query<int>("SELECT Id FROM Questions WHERE LastTimeActive >= @startTime AND LastTimeActive <= @endTime", new { startTime, endTime }).ToList();
+                var questionIds = con.Query<int>(@"SELECT Id FROM QUESTIONS WHERE (DATEDIFF(DAY, [LastTimeActive], [LastUpdated]) + DATEDIFF(SECOND, [LastTimeActive], [LastUpdated])) <= @timeActiveSeconds", new { timeActiveSeconds }).ToList();
                 foreach (var questionId in questionIds)
                     QueueQuestionQuery(questionId);
             }
@@ -288,7 +287,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     //Now we mark it as new activity
                     using (var con = DataContext.PlainConnection())
                     {
-                        con.Execute(@"UPDATE QUESTIONS SET LastTimeActive = GETUTCDATE()");
+                        con.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id });
                     }
                 }
             }
