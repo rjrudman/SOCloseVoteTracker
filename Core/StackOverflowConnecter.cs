@@ -159,7 +159,7 @@ namespace Core
 
                 var match = _questionIdRegex.Match(url);
                 dupeParent = int.Parse(match.Groups["questionID"].Value);
-                Pollers.QueryQuestion(dupeParent.Value, DateTime.Now);
+                Pollers.QueryQuestion(dupeParent.Value, DateTime.Now, false);
             }
             
             var numCloseVotes = 0;
@@ -178,7 +178,7 @@ namespace Core
                 using (var context = new DataContext())
                 {
                     var question = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                    if (question != null && question.QuestionVotes.Count != numCloseVotes)
+                    if (question == null || question.QuestionVotes.Count != numCloseVotes)
                         requireCloseVoteDetails = true;
                 }
             }
@@ -210,6 +210,9 @@ namespace Core
             var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator, CloseVotePopupThrottle);
             
             var response = throttler.Execute();
+            if (response.StatusCode != HttpStatusCode.OK) //We're throttled to 3 seconds. Exceeding this throttle returns a 409 response. Throwing an exception will put it into the retry queue.
+                throw new Exception("Failed to load close dialog");
+
             var parser = new HtmlParser(response.Content);
             parser.Parse();
 

@@ -18,7 +18,7 @@ namespace Core.Workers
         const string UPSERT_QUESTION_SQL = @"
 IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @Id)
 BEGIN
-    INSERT INTO Questions(Id, Closed, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, DuplicateParentId, Asked, Title, LastUpdated) VALUES (@Id, @Closed, @Deleted, @DeleteVotes, @UndeleteVotes, @ReopenVotes, @DuplicateParentId, @Asked, @Title, GETUTCDATE())
+    INSERT INTO Questions(Id, Closed, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, DuplicateParentId, Asked, Title, LastUpdated, LastTimeActive) VALUES (@Id, @Closed, @Deleted, @DeleteVotes, @UndeleteVotes, @ReopenVotes, @DuplicateParentId, @Asked, @Title, GETUTCDATE(), GETUTCDATE())
 END
 ELSE
 BEGIN
@@ -62,6 +62,19 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 //Every hour
                 RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
 
+                //Query this every 15 minutes
+
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "*/15 * * * *");
+
+                //Query this every hour
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 * * * *");
+
+                //Query this every two hour
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFiveHours(), "0 */2 * * *");
+
+                //Query this every day
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
+
                 PollFrontPage();
 
                 Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
@@ -89,6 +102,37 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             QueueQuestionQueries(new StackOverflowConnecter().GetRecentCloseVoteReviews());
         }
 
+        public static void PollActiveQuestionsFifteenMins()
+        {
+            PollActiveQuestions(TimeSpan.FromMinutes(15));
+        }
+
+        public static void PollActiveQuestionsHour()
+        {
+            PollActiveQuestions(TimeSpan.FromMinutes(60));
+        }
+
+        public static void PollActiveQuestionsFiveHours()
+        {
+            PollActiveQuestions(TimeSpan.FromHours(5));
+        }
+
+        public static void PollActiveQuestionsDay()
+        {
+            PollActiveQuestions(TimeSpan.FromHours(24));
+        }
+
+        public static void PollActiveQuestions(TimeSpan timeLastActive)
+        {
+            var timeActiveSeconds = timeLastActive.TotalSeconds;
+            using (var con = DataContext.PlainConnection())
+            {
+                var questionIds = con.Query<int>(@"SELECT Id FROM QUESTIONS WHERE (DATEDIFF(DAY, [LastTimeActive], [LastUpdated]) + DATEDIFF(SECOND, [LastTimeActive], [LastUpdated])) <= @timeActiveSeconds", new { timeActiveSeconds }).ToList();
+                foreach (var questionId in questionIds)
+                    QueueQuestionQuery(questionId);
+            }
+        }
+        
         public static void PollFrontPage()
         {
             ActiveQuestionsPoller.Register(question =>
@@ -115,18 +159,17 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
         private static void QueueQuestionQueries(IEnumerable<int> questionIds)
         {
-            var now = DateTime.Now;
             foreach(var questionId in questionIds)
                 QueueQuestionQuery(questionId);
         }
 
-        public static void QueueQuestionQuery(int questionId, TimeSpan? after = null)
+        public static void QueueQuestionQuery(int questionId, TimeSpan? after = null, bool forceEnqueue = false)
         {
             using (var con = DataContext.PlainConnection())
-                QueueQuestionQuery(con, questionId, after);
+                QueueQuestionQuery(con, questionId, after, forceEnqueue);
         }
 
-        public static void QueueQuestionQuery(IDbConnection con, int questionId, TimeSpan? after = null)
+        public static void QueueQuestionQuery(IDbConnection con, int questionId, TimeSpan? after = null, bool forceEnqueue = false)
         {
             using (var trans = con.BeginTransaction())
             {
@@ -142,14 +185,20 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 trans.Commit();
 
                 if (after == null)
-                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now));
+                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now, forceEnqueue));
                 else
-                    BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), after.Value);
+                    BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now, forceEnqueue), after.Value);
             }
 
         }
 
+        //Backwards compatability for a few days
         public static void QueryQuestion(int questionId, DateTime dateRequested)
+        {
+            QueryQuestion(questionId, dateRequested, false);
+        }
+
+        public static void QueryQuestion(int questionId, DateTime dateRequested, bool forceEnqueue)
         {
             var connecter = new StackOverflowConnecter();
             using (var con = DataContext.PlainConnection())
@@ -160,11 +209,13 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     trans.Commit();
                 }
 
-                //Possibly put this back in later
-                //var oneMinuteAgo = DateTime.Now.AddMinutes(-1);
-                //var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new { id = questionId }).FirstOrDefault();
-                //if (lastUpdated != null && lastUpdated.Value >= oneMinuteAgo)
-                //    return;
+                if (!forceEnqueue)
+                {
+                    var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
+                    var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new {id = questionId}).FirstOrDefault();
+                    if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
+                        return;
+                }
             }
 
             var question = connecter.GetQuestionInformation(questionId);
@@ -217,24 +268,30 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 }
             }
             
-            //New activity
-            if (newCloseVotesFound || existingQuestion == null)
-                QueueQuestionQuery(question.Id, TimeSpan.FromMinutes(15));
-            else
+            //We mark it as active when:
+            //Delete status changed
+            //Closed status changed
+            //Different amount of (un)Delete votes
+            //Different amount of reopen/close votes
+            if (existingQuestion != null)
             {
-                //No new activity. Keep checking it less and less often, after about a day it will fall off the queue if no new close votes are found.
-
-                var timeSinceLastUpdated = existingQuestion.LastUpdated - DateTime.Now;
-                if (timeSinceLastUpdated < TimeSpan.FromMinutes(30))
-                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(1));
-                else if (timeSinceLastUpdated < TimeSpan.FromHours(1))
-                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(2));
-                else if (timeSinceLastUpdated < TimeSpan.FromHours(2))
-                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(3));
-                else if (timeSinceLastUpdated < TimeSpan.FromHours(23))
-                    QueueQuestionQuery(question.Id, TimeSpan.FromHours(24));
+                if (
+                    (existingQuestion.Deleted != question.Deleted)
+                    || (existingQuestion.Closed != question.Closed)
+                    || (existingQuestion.DeleteVotes != question.DeleteVotes)
+                    || (existingQuestion.UndeleteVotes != question.UndeleteVotes)
+                    || (newCloseVotesFound)
+                    || (existingQuestion.ReopenVotes != question.ReopenVotes)
+                    )
+                {
+                    //Now we mark it as new activity
+                    using (var con = DataContext.PlainConnection())
+                    {
+                        con.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id });
+                    }
+                }
             }
-
+            
         }
     }
 }

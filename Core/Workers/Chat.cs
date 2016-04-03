@@ -49,7 +49,7 @@ INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@U
 
         public static void QueryQuestionAndLogRequest(int userId, int questionId, string fullMessage, DateTime requestTime)
         {
-            Pollers.QueryQuestion(questionId, DateTime.Now);
+            Pollers.QueryQuestion(questionId, DateTime.Now, false);
 
             using (var connection = DataContext.PlainConnection())
                 connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });

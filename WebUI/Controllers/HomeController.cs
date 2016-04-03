@@ -22,6 +22,7 @@ namespace WebUI.Controllers
             public string TagSearch { get; set; }
             public int TagSearchType { get; set; }
             public int Closed { get; set; }
+            public int Deleted { get; set; }
             public int VoteCount { get; set; }
             public int VoteCountCompare { get; set; }
             public int CloseReason { get; set; }
@@ -86,6 +87,11 @@ namespace WebUI.Controllers
                 else if (query.Closed == 2)
                     dataQuery = dataQuery.Where(q => q.Closed);
 
+                if (query.Deleted == 1)
+                    dataQuery = dataQuery.Where(q => !q.Deleted);
+                else if (query.Deleted == 2)
+                    dataQuery = dataQuery.Where(q => q.Deleted);
+
                 if (query.VoteCountCompare == 1)
                     dataQuery = dataQuery.Where(q => q.QuestionVotes.Count == query.VoteCount);
                 else if (query.VoteCountCompare == 2)
@@ -108,7 +114,9 @@ namespace WebUI.Controllers
                         q.Id,
                         Tags = q.Tags,
                         q.Title,
-                        q.Closed, q.LastUpdated,
+                        q.Closed,
+                        q.Deleted,
+                        q.LastUpdated,
                         VoteCount = q.QuestionVotes.Count()
                     })
                     .ToList()
@@ -118,6 +126,7 @@ namespace WebUI.Controllers
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Title,
                         q.Closed,
+                        q.Deleted,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
                         q.VoteCount
                     });
