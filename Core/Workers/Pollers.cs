@@ -63,16 +63,17 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
 
                 //Query this every 15 minutes
-                RecurringJob.AddOrUpdate(() => PollActiveQuestions(TimeSpan.FromMinutes(15), TimeSpan.Zero), "*/15 * * * *");
+
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "*/15 * * * *");
 
                 //Query this every hour
-                RecurringJob.AddOrUpdate(() => PollActiveQuestions(TimeSpan.FromMinutes(60), TimeSpan.FromMinutes(16)), "0 * * * *");
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 * * * *");
 
                 //Query this every two hour
-                RecurringJob.AddOrUpdate(() => PollActiveQuestions(TimeSpan.FromHours(5), TimeSpan.FromMinutes(61)), "0 */2 * * *");
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFiveHours(), "0 */2 * * *");
 
                 //Query this every day
-                RecurringJob.AddOrUpdate(() => PollActiveQuestions(TimeSpan.FromHours(24), TimeSpan.FromHours(5).Add(TimeSpan.FromMinutes(1))), "0 0 * * *");
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
 
                 PollFrontPage();
 
@@ -101,7 +102,27 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             QueueQuestionQueries(new StackOverflowConnecter().GetRecentCloseVoteReviews());
         }
 
-        private static void PollActiveQuestions(TimeSpan fromTimeAgo, TimeSpan toTimeAgo)
+        public static void PollActiveQuestionsFifteenMins()
+        {
+            PollActiveQuestions(TimeSpan.FromMinutes(15), TimeSpan.Zero);
+        }
+
+        public static void PollActiveQuestionsHour()
+        {
+            PollActiveQuestions(TimeSpan.FromMinutes(60), TimeSpan.FromMinutes(16));
+        }
+
+        public static void PollActiveQuestionsFiveHours()
+        {
+            PollActiveQuestions(TimeSpan.FromHours(5), TimeSpan.FromMinutes(61));
+        }
+
+        public static void PollActiveQuestionsDay()
+        {
+            PollActiveQuestions(TimeSpan.FromHours(24), TimeSpan.FromHours(5).Add(TimeSpan.FromMinutes(1)));
+        }
+
+        public static void PollActiveQuestions(TimeSpan fromTimeAgo, TimeSpan toTimeAgo)
         {
             var startTime = DateTime.UtcNow.Subtract(fromTimeAgo);
             var endTime = DateTime.UtcNow.Subtract(toTimeAgo);
