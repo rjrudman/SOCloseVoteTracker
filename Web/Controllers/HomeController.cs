@@ -25,7 +25,7 @@ namespace Web.Controllers
 
         public ActionResult EnqueueAndRedirect(int questionId)
         {
-            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2));
+            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true);
             return Redirect($"http://stackoverflow.com/q/{questionId}");
         }
     }

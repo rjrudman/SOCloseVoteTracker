@@ -1,9 +1,6 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using Core.Workers;
-using Data;
 using Hangfire;
-using Hangfire.Server;
 
 namespace SOCloseVoteTracker
 {
@@ -22,6 +19,5 @@ namespace SOCloseVoteTracker
 
             Pollers.Start();
         }
-
     }
 }

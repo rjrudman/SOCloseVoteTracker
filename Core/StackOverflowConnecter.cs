@@ -159,7 +159,7 @@ namespace Core
 
                 var match = _questionIdRegex.Match(url);
                 dupeParent = int.Parse(match.Groups["questionID"].Value);
-                Pollers.QueryQuestion(dupeParent.Value, DateTime.Now);
+                Pollers.QueryQuestion(dupeParent.Value, DateTime.Now, false);
             }
             
             var numCloseVotes = 0;

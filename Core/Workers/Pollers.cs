@@ -120,13 +120,13 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 QueueQuestionQuery(questionId);
         }
 
-        public static void QueueQuestionQuery(int questionId, TimeSpan? after = null)
+        public static void QueueQuestionQuery(int questionId, TimeSpan? after = null, bool forceEnqueue = false)
         {
             using (var con = DataContext.PlainConnection())
-                QueueQuestionQuery(con, questionId, after);
+                QueueQuestionQuery(con, questionId, after, forceEnqueue);
         }
 
-        public static void QueueQuestionQuery(IDbConnection con, int questionId, TimeSpan? after = null)
+        public static void QueueQuestionQuery(IDbConnection con, int questionId, TimeSpan? after = null, bool forceEnqueue = false)
         {
             using (var trans = con.BeginTransaction())
             {
@@ -142,14 +142,14 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 trans.Commit();
 
                 if (after == null)
-                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now));
+                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now, forceEnqueue));
                 else
-                    BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now), after.Value);
+                    BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now, forceEnqueue), after.Value);
             }
 
         }
 
-        public static void QueryQuestion(int questionId, DateTime dateRequested)
+        public static void QueryQuestion(int questionId, DateTime dateRequested, bool forceEnqueue)
         {
             var connecter = new StackOverflowConnecter();
             using (var con = DataContext.PlainConnection())
@@ -160,11 +160,13 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                     trans.Commit();
                 }
 
-                //Possibly put this back in later
-                //var oneMinuteAgo = DateTime.Now.AddMinutes(-1);
-                //var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new { id = questionId }).FirstOrDefault();
-                //if (lastUpdated != null && lastUpdated.Value >= oneMinuteAgo)
-                //    return;
+                if (!forceEnqueue)
+                {
+                    var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
+                    var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new {id = questionId}).FirstOrDefault();
+                    if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
+                        return;
+                }
             }
 
             var question = connecter.GetQuestionInformation(questionId);
