@@ -178,7 +178,7 @@ namespace Core
                 using (var context = new DataContext())
                 {
                     var question = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                    if (question != null && question.QuestionVotes.Count != numCloseVotes)
+                    if (question == null || question.QuestionVotes.Count != numCloseVotes)
                         requireCloseVoteDetails = true;
                 }
             }
