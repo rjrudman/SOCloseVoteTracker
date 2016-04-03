@@ -104,28 +104,28 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
         public static void PollActiveQuestionsFifteenMins()
         {
-            PollActiveQuestions(TimeSpan.FromMinutes(15), TimeSpan.Zero);
+            PollActiveQuestions(TimeSpan.Zero, TimeSpan.FromMinutes(15));
         }
 
         public static void PollActiveQuestionsHour()
         {
-            PollActiveQuestions(TimeSpan.FromMinutes(60), TimeSpan.FromMinutes(16));
+            PollActiveQuestions(TimeSpan.FromMinutes(16), TimeSpan.FromMinutes(60));
         }
 
         public static void PollActiveQuestionsFiveHours()
         {
-            PollActiveQuestions(TimeSpan.FromHours(5), TimeSpan.FromMinutes(61));
+            PollActiveQuestions(TimeSpan.FromMinutes(61), TimeSpan.FromHours(5));
         }
 
         public static void PollActiveQuestionsDay()
         {
-            PollActiveQuestions(TimeSpan.FromHours(24), TimeSpan.FromHours(5).Add(TimeSpan.FromMinutes(1)));
+            PollActiveQuestions(TimeSpan.FromHours(5).Add(TimeSpan.FromMinutes(1)), TimeSpan.FromHours(24));
         }
 
-        public static void PollActiveQuestions(TimeSpan fromTimeAgo, TimeSpan toTimeAgo)
+        public static void PollActiveQuestions(TimeSpan startAgo, TimeSpan endAgo)
         {
-            var startTime = DateTime.UtcNow.Subtract(fromTimeAgo);
-            var endTime = DateTime.UtcNow.Subtract(toTimeAgo);
+            var startTime = DateTime.UtcNow.Subtract(endAgo);
+            var endTime = DateTime.UtcNow.Subtract(startAgo);
             using (var con = DataContext.PlainConnection())
             {
                 var questionIds = con.Query<int>("SELECT Id FROM Questions WHERE LastTimeActive >= @startTime AND LastTimeActive <= @endTime", new { startTime, endTime }).ToList();
