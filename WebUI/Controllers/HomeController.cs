@@ -37,6 +37,7 @@ namespace WebUI.Controllers
             public int TagSearchType { get; set; }
             public int Closed { get; set; }
             public int Deleted { get; set; }
+            public int HasReview { get; set; }
             public int VoteCount { get; set; }
             public int VoteCountCompare { get; set; }
             public int CloseReason { get; set; }
@@ -122,6 +123,11 @@ namespace WebUI.Controllers
                     dataQuery = dataQuery.Where(q => !q.Deleted);
                 else if (query.Deleted == 2)
                     dataQuery = dataQuery.Where(q => q.Deleted);
+
+                if (query.HasReview == 1)
+                    dataQuery = dataQuery.Where(q => q.ReviewID == null);
+                else if (query.HasReview == 2)
+                    dataQuery = dataQuery.Where(q => q.ReviewID != null);
 
                 if (query.VoteCountCompare == 1)
                     dataQuery = dataQuery.Where(q => q.QuestionVotes.Count == query.VoteCount);

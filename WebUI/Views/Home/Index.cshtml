@@ -61,6 +61,10 @@
                     <div id="deleted" class="btn-group" data-toggle="buttons"> </div>
                 </div>
                 <div class="optionItem">
+                    <label class="filterName">Has Review</label>
+                    <div id="hasreview" class="btn-group" data-toggle="buttons"> </div>
+                </div>
+                <div class="optionItem">
                     <label class="filterName">Votes</label>
 
                     <div id="voteCountCompare" class="btn-group" data-toggle="buttons"> </div>
@@ -111,6 +115,13 @@ ORDER BY COUNT(*) DESC</textarea>
             { Value: 2, Text: 'All Tags' }
         ];
         fillOptions($('#tags'), 'tags', tags);
+
+        var hasreview = [
+{ Value: 1, Text: 'No' },
+{ Value: 2, Text: 'Yes' },
+{ Value: 0, Text: 'Any', Default: true }
+        ];
+        fillOptions($('#hasreview'), 'hasreview', hasreview);
 
         var deleted = [
     { Value: 1, Text: 'No', Default: true },
@@ -233,6 +244,7 @@ ORDER BY COUNT(*) DESC</textarea>
 
         var closed = $('[name="closed"]:checked').val();
         var deleted = $('[name="deleted"]:checked').val();
+        var hasreview = $('[name="hasreview"]:checked').val();
 
         var voteCount = $('[name="voteCount"]:checked').val();
         var voteCountCompare = $('[name="voteCountCompare"]:checked').val();
@@ -244,6 +256,7 @@ ORDER BY COUNT(*) DESC</textarea>
             TagSearchType: tagSearchType,
             Closed: closed,
             Deleted: deleted,
+            HasReview: hasreview,
             VoteCount: voteCount,
             VoteCountCompare: voteCountCompare,
             CloseReason: closeReason
