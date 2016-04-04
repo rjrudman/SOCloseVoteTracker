@@ -15,6 +15,8 @@ namespace Data.Entities
         public bool Closed { get; set; }
         public bool Deleted { get; set; }
 
+        public int? ReviewID { get; set; }
+
         public int DeleteVotes { get; set; }
         public int UndeleteVotes { get; set; }
         public int ReopenVotes { get; set; }

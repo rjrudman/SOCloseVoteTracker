@@ -20,6 +20,7 @@ namespace Core
         private const string SITE_URL = @"https://stackoverflow.com";
 
         private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
+        private readonly Regex _reviewIdRegex = new Regex("\\/review\\/close\\/(?<reviewID>\\d+)");
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
         private readonly Regex _undeleteVoteCount = new Regex("^undelete \\((?<numVotes>\\d)\\)$");
         private readonly Regex _deleteVoteCount = new Regex("^delete \\((?<numVotes>\\d)\\)$");
@@ -52,28 +53,34 @@ namespace Core
             }).ToList();
         }
 
-        public IList<int> GetRecentCloseVoteReviews()
+        public Dictionary<int, int> GetRecentCloseVoteReviews()
         {
             var throttler = new RestRequestThrottler(SITE_URL, "review/close/history", Method.GET, _authenticator);
 
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
 
-            var rows = parser.Result.QuerySelectorAll(".question-hyperlink");
-            return rows.Select(r =>
+            var rows = parser.Result.QuerySelectorAll(".history-table tr");
+            var dict = new Dictionary<int, int>();
+            foreach (var row in rows)
             {
-                var text = r.TextContent;
-                if (!string.IsNullOrWhiteSpace(text))
+                var questionLinkElement = row.QuerySelector(".question-hyperlink");
+                var reviewLinkElement = row.QuerySelector("td:nth-child(3) a");
+
+                var questionLinkHref = questionLinkElement.GetAttribute("href");
+                var reviewLinkHref = reviewLinkElement.GetAttribute("href");
+
+                var questionMatch = _questionIdRegex.Match(questionLinkHref);
+                var reviewMatch = _reviewIdRegex.Match(reviewLinkHref);
+                if (questionMatch.Success && reviewMatch.Success)
                 {
-                    int id;
-                    if (int.TryParse(text, out id))
-                        return id;
+                    var questionId = int.Parse(questionMatch.Groups["questionID"].Value);
+                    var reviewId = int.Parse(reviewMatch.Groups["reviewID"].Value);
+
+                    dict[questionId] = reviewId;
                 }
-                return (int?) null;
-            })
-                .Where(r => r.HasValue)
-                .Select(r => r.Value)
-                .ToList();
+            }
+            return dict;
         }
 
         public IList<int> GetRecentlyClosed()
