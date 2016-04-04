@@ -51,7 +51,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 c.Database.Initialize(true);
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
-
+            
             if (!Utils.Configuration.DisablePolling)
             {
                 //Every 5 minutes
@@ -63,18 +63,14 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
 
                 //Query this every 15 minutes
-
                 RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "*/15 * * * *");
 
                 //Query this every hour
                 RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 * * * *");
 
-                //Query this every two hour
-                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFiveHours(), "0 */2 * * *");
-
-                //Query this every day
-                RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
-
+                //Query this every five hours
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFiveHours(), "0 */5 * * *");
+                
                 PollFrontPage();
 
                 Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
@@ -99,7 +95,31 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
 
         public static void GetRecentCloseVoteReviews()
         {
-            QueueQuestionQueries(new StackOverflowConnecter().GetRecentCloseVoteReviews());
+            var matches = new StackOverflowConnecter().GetRecentCloseVoteReviews();
+            using (var con = DataContext.PlainConnection())
+            {
+                using (var trans = con.BeginTransaction())
+                {
+                    foreach (var match in matches)
+                    {
+                        //If the question doesn't exist, insert a blank row (we will queue it for scraping later)
+                        con.Execute(@"
+IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @questionId)
+BEGIN
+    INSERT INTO Questions(Id, Closed, LastUpdated, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, LastTimeActive, ReviewId) 
+        VALUES (@questionId, 0, GETUTCDATE(), 0, 0, 0, 0, GETUTCDATE(), @reviewId)
+END
+ELSE
+BEGIN
+    UPDATE Questions SET ReviewId = @reviewId WHERE Id = @questionId
+END
+", new { questionId = match.Key, reviewId = match.Value }, trans);
+                    }
+
+                    trans.Commit();
+                }
+            }
+            QueueQuestionQueries(matches.Keys);
         }
 
         public static void PollActiveQuestionsFifteenMins()
@@ -117,17 +137,12 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             PollActiveQuestions(TimeSpan.FromHours(5));
         }
 
-        public static void PollActiveQuestionsDay()
-        {
-            PollActiveQuestions(TimeSpan.FromHours(24));
-        }
-
         public static void PollActiveQuestions(TimeSpan timeLastActive)
         {
             var timeActiveSeconds = timeLastActive.TotalSeconds;
             using (var con = DataContext.PlainConnection())
             {
-                var questionIds = con.Query<int>(@"SELECT Id FROM QUESTIONS WHERE (DATEDIFF(DAY, [LastTimeActive], [LastUpdated]) + DATEDIFF(SECOND, [LastTimeActive], [LastUpdated])) <= @timeActiveSeconds", new { timeActiveSeconds }).ToList();
+                var questionIds = con.Query<int>(@"SELECT Id FROM QUESTIONS WHERE (DATEDIFF(DAY, [LastTimeActive], GETUTCDATE()) + DATEDIFF(SECOND, [LastTimeActive], GETUTCDATE())) <= @timeActiveSeconds", new { timeActiveSeconds }).ToList();
                 foreach (var questionId in questionIds)
                     QueueQuestionQuery(questionId);
             }

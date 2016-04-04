@@ -119,6 +119,14 @@
     <Compile Include="Migrations\201604030710313_TrackTimeActive.Designer.cs">
       <DependentUpon>201604030710313_TrackTimeActive.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604040220028_TieQuestionToReview.cs" />
+    <Compile Include="Migrations\201604040220028_TieQuestionToReview.Designer.cs">
+      <DependentUpon>201604040220028_TieQuestionToReview.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604040342126_PerformanceEnhancements.cs" />
+    <Compile Include="Migrations\201604040342126_PerformanceEnhancements.Designer.cs">
+      <DependentUpon>201604040342126_PerformanceEnhancements.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -168,6 +176,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604030710313_TrackTimeActive.resx">
       <DependentUpon>201604030710313_TrackTimeActive.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604040220028_TieQuestionToReview.resx">
+      <DependentUpon>201604040220028_TieQuestionToReview.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604040342126_PerformanceEnhancements.resx">
+      <DependentUpon>201604040342126_PerformanceEnhancements.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
