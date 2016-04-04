@@ -224,11 +224,11 @@ ORDER BY COUNT(*) DESC</textarea>
                 var dataItem = data[i][headerName];
                 var headerNameLower = headerName.toLowerCase();
                 if (headerNameLower === 'questionid') {
-                    htmlRow.append('<td>' + dataItem + ' <a href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
+                    htmlRow.append('<td>' + dataItem + ' <a name="' + dataItem + '" href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
                 } else if (headerNameLower === 'reviewid' && dataItem !== null) {
                     htmlRow.append('<td><a target="_blank" href="http://soclosevotetrackerworker.azurewebsites.net/home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
                 } else if (headerNameLower === 'postlink' && dataItem !== null && data[i][headerMapping['questionid']]) {
-                    htmlRow.append('<td><a target="_blank" name="' + dataItem + '" href="http://soclosevotetrackerworker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + data[i][headerMapping['questionid']] + '">' + dataItem + '</a></td>');
+                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetrackerworker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + data[i][headerMapping['questionid']] + '">' + dataItem + '</a></td>');
                 } else {
                     if (dataItem !== null)
                         htmlRow.append('<td>' + dataItem + "</td>");
