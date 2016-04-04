@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Web.Mvc;
 using Core.Workers;
+using Dapper;
+using Data;
 using Hangfire;
 
 namespace Web.Controllers
@@ -31,7 +34,12 @@ namespace Web.Controllers
 
         public ActionResult EnqueueAndRedirectReview(int reviewId)
         {
-            Pollers.QueueQuestionQuery(reviewId, TimeSpan.FromMinutes(2), true);
+            using (var con = DataContext.PlainConnection())
+            {
+                var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new { reviewId = reviewId }).FirstOrDefault();
+                if (questionId != null)
+                    Pollers.QueueQuestionQuery(questionId.Value, TimeSpan.FromMinutes(2), true);
+            }
             return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
         }
     }

@@ -92,7 +92,7 @@
             </div>
 
             <textarea id="txtSql" style="width: 100%; height: 600px">SELECT TOP 100
-Id as [QuestionID], Title, Closed, LastUpdated, COUNT(*) as NumVotes
+Id as [QuestionID], Title as [PostLink], Closed, LastUpdated, COUNT(*) as NumVotes
 FROM QUESTIONS
 LEFT JOIN QuestionVotes on QuestionVotes.QuestionId = Questions.Id
 WHERE Closed = 0
@@ -211,6 +211,11 @@ ORDER BY COUNT(*) DESC</textarea>
             headRow.append('<td>' + headers[i] + '</td>');
         }
 
+        var headerMapping = {};
+        for (var k = 0; k < headers.length; k++) {
+            headerMapping[headers[k].toLowerCase()] = headers[k];
+        }
+
         var body = $('<tbody>');
         for (i = 0; i < data.length; i++) {
             var htmlRow = $('<tr>');
@@ -219,9 +224,11 @@ ORDER BY COUNT(*) DESC</textarea>
                 var dataItem = data[i][headerName];
                 var headerNameLower = headerName.toLowerCase();
                 if (headerNameLower === 'questionid') {
-                    htmlRow.append('<td><a target="_blank" name="' + dataItem + '" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + dataItem + '">' + dataItem + '</a> <a href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
+                    htmlRow.append('<td>' + dataItem + ' <a href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
                 } else if (headerNameLower === 'reviewid' && dataItem !== null) {
-                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
+                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirectReview?questionId=' + dataItem + '">' + dataItem + '</a></td>');
+                } else if (headerNameLower === 'postlink' && dataItem !== null && data[i][headerMapping['questionid']]) {
+                    htmlRow.append('<td><a target="_blank" name="' + dataItem + '" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + data[i][headerMapping['questionid']] + '">' + dataItem + '</a></td>');
                 } else {
                     if (dataItem !== null)
                         htmlRow.append('<td>' + dataItem + "</td>");

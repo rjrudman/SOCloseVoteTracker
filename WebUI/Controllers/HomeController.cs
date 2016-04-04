@@ -163,8 +163,8 @@ namespace WebUI.Controllers
                     {
                         QuestionId = q.Id,
                         q.ReviewID,
+                        PostLink = q.Title,
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
-                        q.Title,
                         q.Closed,
                         q.Deleted,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
