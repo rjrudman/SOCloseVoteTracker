@@ -205,10 +205,16 @@ ORDER BY COUNT(*) DESC</textarea>
             for (var j = 0; j < headers.length; j++) {
                 var headerName = headers[j];
                 var dataItem = data[i][headerName];
-                if (headerName.toLowerCase() === 'questionid') {
-                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + dataItem + '">' + dataItem + '</a></td>');
+                var headerNameLower = headerName.toLowerCase();
+                if (headerNameLower === 'questionid') {
+                    htmlRow.append('<td><a target="_blank" name="' + dataItem + '" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + dataItem + '">' + dataItem + '</a> <a href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
+                } else if (headerNameLower === 'reviewid' && dataItem !== null) {
+                    htmlRow.append('<td><a target="_blank" href="http://stackoverflow.com/review/close/' + dataItem + '">' + dataItem + '</a></td>');
                 } else {
-                    htmlRow.append('<td>' + dataItem + "</td>");
+                    if (dataItem !== null)
+                        htmlRow.append('<td>' + dataItem + "</td>");
+                    else
+                        htmlRow.append('<td></td>');
                 }
 
             }
@@ -255,6 +261,14 @@ ORDER BY COUNT(*) DESC</textarea>
             renderTable($('#dynamicTable'), results);
             $('#cover').fadeOut();
         });
+    }
+
+    function dismissItem(questionId) {
+        var link = $('a[name="' + questionId + '"]');
+        var row = link.parent().parent();
+        row.fadeOut();
+
+        $.post('/Home/HideQuestion', { questionId: questionId }, function(results) {});
     }
 
 </script>

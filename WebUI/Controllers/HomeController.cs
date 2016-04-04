@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.Linq;
+using System.Net;
 using System.Web.Mvc;
 using Dapper;
 using Data;
@@ -12,6 +13,19 @@ namespace WebUI.Controllers
 {
     public class HomeController : Controller
     {
+        private List<int> HiddenQuestionIds
+        {
+            get
+            {
+                var existingList = Session["HiddenQuestionId"] as List<int>;
+                if (existingList == null)
+                    Session["HiddenQuestionId"] = existingList = new List<int>();
+
+                return existingList;
+            }
+            set { Session["HiddenQuestionId"] = value; }
+        } 
+
         public ActionResult Index()
         {
             return View();
@@ -26,6 +40,13 @@ namespace WebUI.Controllers
             public int VoteCount { get; set; }
             public int VoteCountCompare { get; set; }
             public int CloseReason { get; set; }
+        }
+
+        [HttpPost]
+        public ActionResult HideQuestion(int questionId)
+        {
+            HiddenQuestionIds.Add(questionId);
+            return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
 
         [HttpPost]
@@ -82,6 +103,9 @@ namespace WebUI.Controllers
                     }
                 }
 
+                if (HiddenQuestionIds.Any())
+                    dataQuery = dataQuery.Where(q => !HiddenQuestionIds.Contains(q.Id));
+
                 if (query.Closed == 1)
                     dataQuery = dataQuery.Where(q => !q.Closed);
                 else if (query.Closed == 2)
@@ -112,6 +136,7 @@ namespace WebUI.Controllers
                     .Select(q => new
                     {
                         q.Id,
+                        q.ReviewID,
                         Tags = q.Tags,
                         q.Title,
                         q.Closed,
@@ -124,6 +149,7 @@ namespace WebUI.Controllers
                     .Select(q => new
                     {
                         QuestionId = q.Id,
+                        q.ReviewID,
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Title,
                         q.Closed,
