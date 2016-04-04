@@ -96,19 +96,30 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
         public static void GetRecentCloseVoteReviews()
         {
             var matches = new StackOverflowConnecter().GetRecentCloseVoteReviews();
-            foreach (var match in matches)
-                QueryQuestion(match.Key, DateTime.Now);
-
             using (var con = DataContext.PlainConnection())
             {
                 using (var trans = con.BeginTransaction())
                 {
                     foreach (var match in matches)
-                        con.Execute("UPDATE Questions SET ReviewId = @reviewID WHERE Id = @questionID", new {reviewID = match.Value, questionID = match.Key}, trans);
+                    {
+                        //If the question doesn't exist, insert a blank row (we will queue it for scraping later)
+                        con.Execute(@"
+IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @questionId)
+BEGIN
+    INSERT INTO Questions(Id, Closed, LastUpdated, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, LastTimeActive, ReviewId) 
+        VALUES (@questionId, 0, GETUTCDATE(), 0, 0, 0, 0, GETUTCDATE(), @reviewId)
+END
+ELSE
+BEGIN
+    UPDATE Questions SET ReviewId = @reviewId WHERE Id = @questionId
+END
+", new { questionId = match.Key, reviewId = match.Value }, trans);
+                    }
 
                     trans.Commit();
                 }
-            }            
+            }
+            QueueQuestionQueries(matches.Keys);
         }
 
         public static void PollActiveQuestionsFifteenMins()
