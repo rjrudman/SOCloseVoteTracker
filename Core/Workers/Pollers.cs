@@ -104,7 +104,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 using (var trans = con.BeginTransaction())
                 {
                     foreach (var match in matches)
-                        con.Execute("UPDATE Questions SET ReviewID = @reviewID WHERE Id = @questionID", new {reviewID = match.Value, questionID = match.Key}, trans);
+                        con.Execute("UPDATE Questions SET ReviewId = @reviewID WHERE Id = @questionID", new {reviewID = match.Value, questionID = match.Key}, trans);
 
                     trans.Commit();
                 }

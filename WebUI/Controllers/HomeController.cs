@@ -125,9 +125,9 @@ namespace WebUI.Controllers
                     dataQuery = dataQuery.Where(q => q.Deleted);
 
                 if (query.HasReview == 1)
-                    dataQuery = dataQuery.Where(q => q.ReviewID == null);
+                    dataQuery = dataQuery.Where(q => q.ReviewId == null);
                 else if (query.HasReview == 2)
-                    dataQuery = dataQuery.Where(q => q.ReviewID != null);
+                    dataQuery = dataQuery.Where(q => q.ReviewId != null);
 
                 if (query.VoteCountCompare == 1)
                     dataQuery = dataQuery.Where(q => q.QuestionVotes.Count == query.VoteCount);
@@ -149,7 +149,7 @@ namespace WebUI.Controllers
                     .Select(q => new
                     {
                         q.Id,
-                        q.ReviewID,
+                        ReviewID = q.ReviewId,
                         Tags = q.Tags,
                         q.Title,
                         q.Closed,
@@ -157,7 +157,7 @@ namespace WebUI.Controllers
                         q.LastUpdated,
                         VoteCount = q.QuestionVotes.Count()
                     })
-                    .Take(500)
+                    .Take(100)
                     .ToList()
                     .Select(q => new
                     {
