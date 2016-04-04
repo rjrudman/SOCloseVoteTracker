@@ -18,7 +18,7 @@ namespace Core.Workers
 
 //        public static void JoinAndWatchRoom(string roomURL)
 //        {
-//            _chatClient = new Client(Configuration.UserName, Configuration.Password, Configuration.ProxyUrl, Configuration.ProxyUsername, Configuration.ProxyPassword);
+//            _chatClient = new Client(GlobalConfiguration.UserName, GlobalConfiguration.Password, GlobalConfiguration.ProxyUrl, GlobalConfiguration.ProxyUsername, GlobalConfiguration.ProxyPassword);
 //            _chatRoom = _chatClient.JoinRoom(roomURL);
 //            _chatRoom.EventManager.IgnoreOwnEvents = false;
 

@@ -23,8 +23,8 @@ namespace Core.Sockets
         private void InitialiseSocket()
         {
             socket = new WebSocket(SESocketsUrl);
-            if (!string.IsNullOrWhiteSpace(Configuration.ProxyUrl))
-                socket.SetProxy(Configuration.ProxyUrl, Configuration.ProxyUsername, Configuration.ProxyPassword);
+            if (!string.IsNullOrWhiteSpace(GlobalConfiguration.ProxyUrl))
+                socket.SetProxy(GlobalConfiguration.ProxyUrl, GlobalConfiguration.ProxyUsername, GlobalConfiguration.ProxyPassword);
 
             socket.OnOpen += (o, oo) =>
                 socket.Send(ActionRequest);
