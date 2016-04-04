@@ -42,6 +42,13 @@ namespace WebUI.Controllers
             public int CloseReason { get; set; }
         }
 
+        public ActionResult ClearHiddenQuestions()
+        {
+            HiddenQuestionIds = new List<int>();
+            return RedirectToAction("Index");
+        }
+
+
         [HttpPost]
         public ActionResult HideQuestion(int questionId)
         {
