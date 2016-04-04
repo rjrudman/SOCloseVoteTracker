@@ -85,10 +85,10 @@
         <div role="tabpanel" class="tab-pane" id="RawSQL">
             <div style="padding: 15px;">
                 Yes! You can run raw SQL! <a href="/DatabaseDiagram.png">Click here</a> to see the database diagram <br/><br/>
-                <b>Server:</b> soclosevotetracker.database.windows.net,1433<br/>
+                <b>Server:</b> soclosevotetrackerdbserver.database.windows.net,1433<br/>
                 <b>Username:</b> SOCVRReadonly<br/>
                 <b>Password:</b> 30QITGxS69dpd6aPRlr5mb7pkMvtAv<br/>
-                <b>ADO.NET connection string:</b><br/> Server=tcp:soclosevotetracker.database.windows.net,1433;Database=SOCloseVoteTrackerDB;User ID=SOCVRReadonly;Password=30QITGxS69dpd6aPRlr5mb7pkMvtAv;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;<br/>
+                <b>ADO.NET connection string:</b><br/> Server=tcp:soclosevotetrackerdbserver.database.windows.net,1433;Database=SOCloseVoteTrackerDB;User ID=SOCVRReadonly;Password=30QITGxS69dpd6aPRlr5mb7pkMvtAv;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;<br/>
             </div>
 
             <textarea id="txtSql" style="width: 100%; height: 600px">SELECT TOP 100
@@ -226,9 +226,9 @@ ORDER BY COUNT(*) DESC</textarea>
                 if (headerNameLower === 'questionid') {
                     htmlRow.append('<td>' + dataItem + ' <a href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
                 } else if (headerNameLower === 'reviewid' && dataItem !== null) {
-                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
+                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetrackerworker.azurewebsites.net/home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
                 } else if (headerNameLower === 'postlink' && dataItem !== null && data[i][headerMapping['questionid']]) {
-                    htmlRow.append('<td><a target="_blank" name="' + dataItem + '" href="http://soclosevotetracker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + data[i][headerMapping['questionid']] + '">' + dataItem + '</a></td>');
+                    htmlRow.append('<td><a target="_blank" name="' + dataItem + '" href="http://soclosevotetrackerworker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + data[i][headerMapping['questionid']] + '">' + dataItem + '</a></td>');
                 } else {
                     if (dataItem !== null)
                         htmlRow.append('<td>' + dataItem + "</td>");
