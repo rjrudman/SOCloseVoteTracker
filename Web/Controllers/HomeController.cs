@@ -28,5 +28,11 @@ namespace Web.Controllers
             Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true);
             return Redirect($"http://stackoverflow.com/q/{questionId}");
         }
+
+        public ActionResult EnqueueAndRedirectReview(int reviewId)
+        {
+            Pollers.QueueQuestionQuery(reviewId, TimeSpan.FromMinutes(2), true);
+            return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
+        }
     }
 }
