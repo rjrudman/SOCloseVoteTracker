@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Web.Mvc;
 using Core.Workers;
 using Dapper;
@@ -28,18 +29,23 @@ namespace Web.Controllers
 
         public ActionResult EnqueueAndRedirect(int questionId)
         {
-            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true);
+            new Thread(() => {
+                Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true);
+            }).Start();
             return Redirect($"http://stackoverflow.com/q/{questionId}");
         }
 
         public ActionResult EnqueueAndRedirectReview(int reviewId)
         {
-            using (var con = DataContext.PlainConnection())
+            new Thread(() =>
             {
-                var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new { reviewId = reviewId }).FirstOrDefault();
-                if (questionId != null)
-                    Pollers.QueueQuestionQuery(questionId.Value, TimeSpan.FromMinutes(2), true);
-            }
+                using (var con = DataContext.PlainConnection())
+                {
+                    var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new {reviewId = reviewId}).FirstOrDefault();
+                    if (questionId != null)
+                        Pollers.QueueQuestionQuery(questionId.Value, TimeSpan.FromMinutes(2), true);
+                }
+            }).Start();
             return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
         }
     }

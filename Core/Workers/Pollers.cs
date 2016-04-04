@@ -10,6 +10,7 @@ using Data;
 using Data.Entities;
 using Data.Migrations;
 using Hangfire;
+using Hangfire.SqlServer;
 
 namespace Core.Workers
 {
@@ -50,9 +51,12 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
             using (var c = new DataContext())
                 c.Database.Initialize(true);
 
-            GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME);
+            GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME, new SqlServerStorageOptions
+            {
+                JobExpirationCheckInterval = TimeSpan.FromMinutes(5)
+            });
             
-            if (!Utils.Configuration.DisablePolling)
+            if (!Utils.GlobalConfiguration.DisablePolling)
             {
                 //Every 5 minutes
                 RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
@@ -73,7 +77,7 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 
                 PollFrontPage();
 
-                Chat.JoinAndWatchRoom(Utils.Configuration.ChatRoomURL);
+                //Chat.JoinAndWatchRoom(Utils.GlobalConfiguration.ChatRoomURL);
             }
         }
 

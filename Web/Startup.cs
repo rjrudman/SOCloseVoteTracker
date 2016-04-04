@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Data.Entity;
+﻿using System;
+using System.Collections.Generic;
 using System.Web;
 using Core.Workers;
-using Data;
-using Data.Migrations;
 using Hangfire;
+using Hangfire.Common;
 using Hangfire.Dashboard;
+using Hangfire.States;
+using Hangfire.Storage;
 using Microsoft.Owin;
 using Owin;
 
@@ -29,6 +30,7 @@ namespace Web
                 AuthorizationFilters = new[] { new RemoveAuthorizationFilter() }
             };
             app.UseHangfireDashboard("/hangfire", options);
+            GlobalJobFilters.Filters.Add(new ImmediatelyExpireSuccessfulJobs());
         }
 
         public class RemoveAuthorizationFilter : IAuthorizationFilter
@@ -36,6 +38,19 @@ namespace Web
             public bool Authorize(IDictionary<string, object> owinEnvironment)
             { 
                 return true;
+            }
+        }
+
+        public class ImmediatelyExpireSuccessfulJobs : JobFilterAttribute, IApplyStateFilter
+        {
+            public void OnStateApplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
+            {
+                context.JobExpirationTimeout = TimeSpan.Zero;
+            }
+
+            public void OnStateUnapplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
+            {
+                context.JobExpirationTimeout = TimeSpan.Zero;
             }
         }
     }

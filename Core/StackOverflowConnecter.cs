@@ -19,7 +19,7 @@ namespace Core
         private const string API_URL = @"https://api.stackexchange.com/2.2";
         private const string SITE_URL = @"https://stackoverflow.com";
 
-        private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(Configuration.UserName, Configuration.Password);
+        private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(GlobalConfiguration.UserName, GlobalConfiguration.Password);
         private readonly Regex _reviewIdRegex = new Regex("\\/review\\/close\\/(?<reviewID>\\d+)");
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
         private readonly Regex _undeleteVoteCount = new Regex("^undelete \\((?<numVotes>\\d)\\)$");
