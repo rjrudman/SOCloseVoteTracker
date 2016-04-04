@@ -152,8 +152,7 @@ namespace WebUI.Controllers
                         ReviewID = q.ReviewId,
                         Tags = q.Tags,
                         q.Title,
-                        q.Closed,
-                        q.Deleted,
+                        Status = q.Deleted ? "Deleted" : (q.Closed ? "Closed" : "Open"),
                         q.LastUpdated,
                         VoteCount = q.QuestionVotes.Count()
                     })
@@ -165,8 +164,7 @@ namespace WebUI.Controllers
                         q.ReviewID,
                         PostLink = q.Title,
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
-                        q.Closed,
-                        q.Deleted,
+                        q.Status,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
                         q.VoteCount
                     });
