@@ -5,6 +5,7 @@ using Core.Workers;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.Dashboard;
+using Hangfire.SqlServer;
 using Hangfire.States;
 using Hangfire.Storage;
 using Microsoft.Owin;
@@ -23,7 +24,7 @@ namespace Web
 
             app.UseErrorPage();
             app.UseHangfireServer();
-
+            
             var options = new DashboardOptions
             {
                 AppPath = VirtualPathUtility.ToAbsolute("~"),
