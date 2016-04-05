@@ -38,7 +38,7 @@ namespace WebUI.Controllers
         {
             var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
             var req = new RestRequest("Home/PollQuestion", Method.GET);
-            req.AddParameter("questionIds", new[] { questionId });
+            req.AddParameter("questionId", questionId);
             var response = rc.Execute(req);
             var t = 0;
         }
