@@ -13,10 +13,15 @@ namespace Web.Controllers
 {
     public class HomeController : Controller
     {
-        // GET: Home
         public ActionResult Index()
         {
             return View();
+        }
+
+        public ActionResult PollQuestion(int questionId)
+        {
+            Pollers.QueueQuestionQuery(questionId);
+            return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
 
         public ActionResult Poll(IList<int> questionIds)
@@ -24,29 +29,7 @@ namespace Web.Controllers
             foreach(var questionId in questionIds)
                 Pollers.QueueQuestionQuery(questionId);
 
-            return new HttpStatusCodeResult(HttpStatusCode.OK);
-        }
-
-        public ActionResult EnqueueAndRedirect(int questionId)
-        {
-            new Thread(() => {
-                Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true);
-            }).Start();
-            return Redirect($"http://stackoverflow.com/q/{questionId}");
-        }
-
-        public ActionResult EnqueueAndRedirectReview(int reviewId)
-        {
-            new Thread(() =>
-            {
-                using (var con = DataContext.PlainConnection())
-                {
-                    var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new {reviewId = reviewId}).FirstOrDefault();
-                    if (questionId != null)
-                        Pollers.QueueQuestionQuery(questionId.Value, TimeSpan.FromMinutes(2), true);
-                }
-            }).Start();
-            return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
+            return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
     }
 }
