@@ -1,10 +1,4 @@
-﻿using System;
-using System.Text.RegularExpressions;
-using Dapper;
-using Data;
-using Utils;
-
-namespace Core.Workers
+﻿namespace Core.Workers
 {
     public class Chat
     {

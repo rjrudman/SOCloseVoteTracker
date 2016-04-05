@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Azure;
-using Microsoft.WindowsAzure;
 
 namespace Utils
 {

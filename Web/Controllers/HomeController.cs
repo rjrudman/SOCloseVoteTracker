@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Web.Mvc;
 using Core.Workers;
-using Dapper;
-using Data;
-using Hangfire;
 
 namespace Web.Controllers
 {
