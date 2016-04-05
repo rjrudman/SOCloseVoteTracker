@@ -25,7 +25,7 @@
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
-    <ApplicationInsightsResourceId>/subscriptions/e9098452-b899-4e35-abb9-dce63f7859e2/resourcegroups/SOCloseVoteTrackerResourceGroup/providers/microsoft.insights/components/SOCloseVoteTrackerUI</ApplicationInsightsResourceId>
+    <ApplicationInsightsResourceId>/subscriptions/e9098452-b899-4e35-abb9-dce63f7859e2/resourcegroups/SOCloseVoteTrackerResourceGroup/providers/microsoft.insights/components/ApplicationInsights</ApplicationInsightsResourceId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
