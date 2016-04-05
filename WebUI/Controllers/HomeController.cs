@@ -4,10 +4,12 @@ using System.Data.SqlClient;
 using System.Dynamic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Web.Mvc;
 using Dapper;
 using Data;
 using Data.Entities;
+using RestSharp;
 
 namespace WebUI.Controllers
 {
@@ -30,6 +32,35 @@ namespace WebUI.Controllers
         public ActionResult Index()
         {
             return View((SearchQuery)null);
+        }
+
+        private void EnqueueQuestionId(int questionId)
+        {
+            var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
+            var req = new RestRequest("Home/PollQuestion", Method.GET);
+            req.AddParameter("questionIds", new[] { questionId });
+            var response = rc.Execute(req);
+            var t = 0;
+        }
+
+        public ActionResult EnqueueAndRedirect(int questionId)
+        {
+            new Thread(() => EnqueueQuestionId(questionId)).Start();
+            return Redirect($"http://stackoverflow.com/q/{questionId}");
+        }
+
+        public ActionResult EnqueueAndRedirectReview(int reviewId)
+        {
+            new Thread(() =>
+            {
+                using (var con = DataContext.PlainConnection())
+                {
+                    var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new { reviewId = reviewId }).FirstOrDefault();
+                    if (questionId != null)
+                        EnqueueQuestionId(questionId.Value);
+                }
+            }).Start();
+            return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
         }
 
 

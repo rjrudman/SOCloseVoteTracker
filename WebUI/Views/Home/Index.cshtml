@@ -251,9 +251,9 @@ ORDER BY COUNT(*) DESC</textarea>
                 if (headerNameLower === 'questionid') {
                     htmlRow.append('<td>' + dataItem + ' <a name="' + dataItem + '" href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
                 } else if (headerNameLower === 'reviewid' && dataItem !== null) {
-                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetrackerworker.azurewebsites.net/home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
+                    htmlRow.append('<td><a target="_blank" href="/Home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
                 } else if (headerNameLower === 'postlink' && dataItem !== null && data[i][headerMapping['questionid']]) {
-                    htmlRow.append('<td><a target="_blank" href="http://soclosevotetrackerworker.azurewebsites.net/home/EnqueueAndRedirect?questionId=' + data[i][headerMapping['questionid']] + '">' + dataItem + '</a></td>');
+                    htmlRow.append('<td><a target="_blank" href="/Home/EnqueueAndRedirect?questionId=' + data[i][headerMapping['questionid']] + '">' + dataItem + '</a></td>');
                 } else {
                     if (dataItem !== null)
                         htmlRow.append('<td>' + dataItem + "</td>");
