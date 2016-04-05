@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using Core;
 using Core.Workers;
 using Hangfire;
 
@@ -8,16 +9,11 @@ namespace SOCloseVoteTracker
     {
         static void Main()
         {
-            var thread = new Thread(() =>
+            new Thread(() =>
             {
-                using (new BackgroundJobServer())
-                {
-                    while(true) Thread.Sleep(1000);
-                }
-            });
-            thread.Start();
-
-            Pollers.Start();
+                Chat.JoinAndWatchRoom(68414);
+                while (true) Thread.Sleep(1000);
+            }).Start();
         }
     }
 }

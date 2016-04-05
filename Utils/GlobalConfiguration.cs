@@ -36,7 +36,7 @@ namespace Utils
             {
                 UserName = ConfigurationHelper.Get("SO_UserName");
                 Password = ConfigurationHelper.Get("SO_Password");
-                ChatRoomURL = ConfigurationHelper.Get("ChatRoomURL");
+                ChatRoomID = ConfigurationHelper.Get<int>("ChatRoomID");
 
                 DisablePolling = ConfigurationHelper.Get("DisablePolling", false);
                 ProxyUrl = ConfigurationHelper.Get("ProxyUrl", string.Empty);
@@ -49,11 +49,10 @@ namespace Utils
         public static string DefaultConfigurationFile => JsonConvert.SerializeObject(typeof(GlobalConfiguration).GetProperties().Where(p => p.Name != nameof(DefaultConfigurationFile)).ToDictionary(p => p.Name, p => p.GetValue(null)), Formatting.Indented);
 #endif
 
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
         public static string UserName { get; private set; }
         public static string Password { get; private set; }
 
-        public static string ChatRoomURL { get; private set; }
+        public static long ChatRoomID { get; private set; }
 
         public static bool DisablePolling { get; private set; }
 

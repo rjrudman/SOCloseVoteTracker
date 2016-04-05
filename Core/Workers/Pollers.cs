@@ -72,6 +72,8 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 //Query this every hour
                 RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 * * * *");
                 
+                Chat.JoinAndWatchRoom(Utils.GlobalConfiguration.ChatRoomID);
+
                 PollFrontPage();
             }
         }
