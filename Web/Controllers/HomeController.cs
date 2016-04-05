@@ -20,14 +20,14 @@ namespace Web.Controllers
 
         public ActionResult PollQuestion(int questionId)
         {
-            Pollers.QueueQuestionQuery(questionId);
+            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2));
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
 
         public ActionResult Poll(IList<int> questionIds)
         {
             foreach(var questionId in questionIds)
-                Pollers.QueueQuestionQuery(questionId);
+                Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2));
 
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
