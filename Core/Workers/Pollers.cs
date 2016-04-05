@@ -264,7 +264,7 @@ END
                     {
                         int numToInsert;
                         if (existingVotes.ContainsKey(voteGroup.Key))
-                            numToInsert = existingVotes[voteGroup.Key] - voteGroup.Value;
+                            numToInsert = voteGroup.Value - existingVotes[voteGroup.Key];
                         else
                             numToInsert = voteGroup.Value;
 
