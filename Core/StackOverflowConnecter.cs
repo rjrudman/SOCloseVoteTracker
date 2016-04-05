@@ -106,7 +106,7 @@ namespace Core
             if (response.StatusCode != HttpStatusCode.OK)
                 return null;
 
-            if (!response.ResponseUri.ToString().Contains("stackoverflow.com"))
+            if (response.ResponseUri.DnsSafeHost != "stackoverflow.com")
                 return null;
 
             parser.Parse();
