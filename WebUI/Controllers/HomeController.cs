@@ -205,6 +205,8 @@ namespace WebUI.Controllers
                 else if (!string.IsNullOrWhiteSpace(query.SortDesc))
                     selectedQuery = ApplyDynamicOrdering(selectedQuery, query.SortDesc, false);
 
+                selectedQuery = selectedQuery.Take(100);
+
                 var result = selectedQuery
                     .ToList()
                     .Select(q => new
