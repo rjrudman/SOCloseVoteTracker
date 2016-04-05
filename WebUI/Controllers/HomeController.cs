@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Threading;
 using System.Web.Mvc;
@@ -38,8 +39,7 @@ namespace WebUI.Controllers
             var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
             var req = new RestRequest("Home/PollQuestion", Method.GET);
             req.AddParameter("questionId", questionId);
-            var response = rc.Execute(req);
-            var t = 0;
+            rc.Execute(req); //Not majorly important if this fails.
         }
 
         public ActionResult EnqueueAndRedirect(int questionId)
@@ -71,6 +71,9 @@ namespace WebUI.Controllers
 
         public class SearchQuery
         {
+            public string SortAsc { get; set; }
+            public string SortDesc { get; set; }
+
             public string TagSearch { get; set; }
             public int TagSearchType { get; set; }
             public int Closed { get; set; }
@@ -185,24 +188,30 @@ namespace WebUI.Controllers
                 if (query.CloseReason > 0)
                     dataQuery = dataQuery.Where(q => q.QuestionVotes.Any(qv => qv.VoteTypeId == query.CloseReason));
 
-                var result = dataQuery
-                    .Select(q => new
-                    {
-                        q.Id,
-                        ReviewID = q.ReviewId,
-                        Tags = q.Tags,
-                        q.Title,
-                        Status = q.Deleted ? "Deleted" : (q.Closed ? "Closed" : "Open"),
-                        q.LastUpdated,
-                        VoteCount = q.QuestionVotes.Count()
-                    })
-                    .Take(100)
-                    .ToList()
+                var selectedQuery = dataQuery
                     .Select(q => new
                     {
                         QuestionId = q.Id,
-                        q.ReviewID,
+                        ReviewId = q.ReviewId,
+                        Tags = q.Tags,
                         PostLink = q.Title,
+                        Status = q.Deleted ? "Deleted" : (q.Closed ? "Closed" : "Open"),
+                        q.LastUpdated,
+                        VoteCount = q.QuestionVotes.Count()
+                    });
+
+                if (!string.IsNullOrWhiteSpace(query.SortAsc))
+                    selectedQuery = ApplyDynamicOrdering(selectedQuery, query.SortAsc, true);
+                else if (!string.IsNullOrWhiteSpace(query.SortDesc))
+                    selectedQuery = ApplyDynamicOrdering(selectedQuery, query.SortDesc, false);
+
+                var result = selectedQuery
+                    .ToList()
+                    .Select(q => new
+                    {
+                        q.QuestionId,
+                        q.ReviewId,
+                        q.PostLink,
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Status,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
@@ -211,6 +220,20 @@ namespace WebUI.Controllers
 
                 return Json(result);
             }
+        }
+
+        private IOrderedQueryable<TEntityType> ApplyDynamicOrdering<TEntityType>(IQueryable<TEntityType> query, string orderBy, bool asc)
+        {
+            var param = Expression.Parameter(typeof (TEntityType));
+            var expr = Expression.PropertyOrField(param, orderBy);
+            var lam = Expression.Lambda(expr, param);
+            
+
+            var method = typeof (Queryable).GetMethods().FirstOrDefault(m => m.Name == (asc ? "OrderBy" : "OrderByDescending") && m.GetParameters().Length == 2);
+            var genericMethod = method.MakeGenericMethod(typeof (TEntityType), expr.Type);
+            var result = genericMethod.Invoke(null, new object[] { query, lam }) as IOrderedQueryable<TEntityType>;
+
+            return result;
         }
     }
 }
