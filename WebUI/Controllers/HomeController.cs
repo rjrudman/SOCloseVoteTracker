@@ -24,11 +24,19 @@ namespace WebUI.Controllers
                 return existingList;
             }
             set { Session["HiddenQuestionId"] = value; }
-        } 
+        }
+
 
         public ActionResult Index()
         {
-            return View();
+            return View((SearchQuery)null);
+        }
+
+
+        public ActionResult PermaLink(SearchQuery query)
+        {
+            query.ImmediatelyQuery = true;
+            return View("Index", query);
         }
 
         public class SearchQuery
@@ -41,6 +49,8 @@ namespace WebUI.Controllers
             public int VoteCount { get; set; }
             public int VoteCountCompare { get; set; }
             public int CloseReason { get; set; }
+
+            public bool ImmediatelyQuery { get; set; }
         }
 
         public ActionResult ClearHiddenQuestions()
