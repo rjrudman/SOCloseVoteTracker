@@ -30,6 +30,7 @@ namespace Data
         public DbSet<QuestionVote> QuestionVotes { get; set; }
         public DbSet<CVPlsRequest> CVPlsRequests { get; set; }
         public DbSet<WebRequest> WebRequests { get; set; }
+        public DbSet<OrderStatusChange> OrderStatusChanges { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -39,7 +40,8 @@ namespace Data
             modelBuilder.Entity<QuestionVote>().ToTable("QuestionVotes");
             modelBuilder.Entity<CVPlsRequest>().ToTable("CVPlsRequests");
             modelBuilder.Entity<WebRequest>().ToTable("WebRequests");
-
+            modelBuilder.Entity<OrderStatusChange>().ToTable("OrderStatusChange");
+            
             modelBuilder.Entity<Question>()
                 .HasMany(q => q.Tags)
                 .WithMany(t => t.Questions)
