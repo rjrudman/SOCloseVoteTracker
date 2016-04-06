@@ -38,7 +38,7 @@ namespace Data.Entities
         public virtual IList<Tag> Tags { get; set; }
 
         [InverseProperty("Question")]
-        public virtual IList<QuestionVote> QuestionVotes { get; set; }
+        public virtual IList<CloseVote> CloseVotes { get; set; }
 
         [InverseProperty("DuplicateParent")]
         public virtual IList<Question> DuplicateChildren { get; set; }

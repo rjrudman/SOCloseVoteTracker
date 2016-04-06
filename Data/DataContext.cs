@@ -27,7 +27,7 @@ namespace Data
         public DbSet<Question> Questions { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<VoteType> VoteTypes { get; set; }
-        public DbSet<QuestionVote> QuestionVotes { get; set; }
+        public DbSet<CloseVote> CloseVotes { get; set; }
         public DbSet<CVPlsRequest> CVPlsRequests { get; set; }
         public DbSet<WebRequest> WebRequests { get; set; }
         public DbSet<OrderStatusChange> OrderStatusChanges { get; set; }
@@ -37,10 +37,10 @@ namespace Data
             modelBuilder.Entity<Question>().ToTable("Questions");
             modelBuilder.Entity<Tag>().ToTable("Tags");
             modelBuilder.Entity<VoteType>().ToTable("VoteTypes");
-            modelBuilder.Entity<QuestionVote>().ToTable("QuestionVotes");
+            modelBuilder.Entity<CloseVote>().ToTable("CloseVotes");
             modelBuilder.Entity<CVPlsRequest>().ToTable("CVPlsRequests");
             modelBuilder.Entity<WebRequest>().ToTable("WebRequests");
-            modelBuilder.Entity<OrderStatusChange>().ToTable("OrderStatusChange");
+            modelBuilder.Entity<OrderStatusChange>().ToTable("OrderStatusChanges");
             
             modelBuilder.Entity<Question>()
                 .HasMany(q => q.Tags)

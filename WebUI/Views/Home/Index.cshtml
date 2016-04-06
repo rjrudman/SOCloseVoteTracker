@@ -118,7 +118,7 @@
             <textarea id="txtSql" style="width: 100%; height: 600px">SELECT TOP 100
 Id as [QuestionID], Title as [PostLink], Closed, LastUpdated, COUNT(*) as NumVotes
 FROM QUESTIONS
-LEFT JOIN QuestionVotes on QuestionVotes.QuestionId = Questions.Id
+LEFT JOIN CloseVotes on CloseVotes.QuestionId = Questions.Id
 WHERE Closed = 0
 GROUP BY Questions.Id, Questions.Title,Questions.LastUpdated,Questions.Closed
 ORDER BY COUNT(*) DESC</textarea>

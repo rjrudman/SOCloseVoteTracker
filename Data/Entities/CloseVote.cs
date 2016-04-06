@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Data.Entities
 {
-    public class QuestionVote
+    public class CloseVote
     {
         [Key]
-        public int QuestionVoteId { get; set; }
+        public int CloseVoteId { get; set; }
 
         [ForeignKey("QuestionId")]
         public Question Question { get; set; }

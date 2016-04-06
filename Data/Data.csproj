@@ -57,10 +57,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataContext.cs" />
+    <Compile Include="Entities\CloseVote.cs" />
     <Compile Include="Entities\CVPlsRequest.cs" />
     <Compile Include="Entities\OrderStatusChange.cs" />
     <Compile Include="Entities\Question.cs" />
-    <Compile Include="Entities\QuestionVote.cs" />
     <Compile Include="Entities\Tag.cs" />
     <Compile Include="Entities\VoteType.cs" />
     <Compile Include="Entities\WebRequest.cs" />
@@ -132,6 +132,18 @@
     <Compile Include="Migrations\201604060645550_TrackStatusChanges.Designer.cs">
       <DependentUpon>201604060645550_TrackStatusChanges.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604060923368_RenameQuestionVotesToCloseVotesP1.cs" />
+    <Compile Include="Migrations\201604060923368_RenameQuestionVotesToCloseVotesP1.Designer.cs">
+      <DependentUpon>201604060923368_RenameQuestionVotesToCloseVotesP1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604060927431_RenameQuestionVotesToCloseVotesP2.cs" />
+    <Compile Include="Migrations\201604060927431_RenameQuestionVotesToCloseVotesP2.Designer.cs">
+      <DependentUpon>201604060927431_RenameQuestionVotesToCloseVotesP2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604061138166_TriggerForClosingQuestions.cs" />
+    <Compile Include="Migrations\201604061138166_TriggerForClosingQuestions.Designer.cs">
+      <DependentUpon>201604061138166_TriggerForClosingQuestions.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Statuses\OrderStatusChangeType.cs" />
@@ -191,6 +203,15 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604060645550_TrackStatusChanges.resx">
       <DependentUpon>201604060645550_TrackStatusChanges.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604060923368_RenameQuestionVotesToCloseVotesP1.resx">
+      <DependentUpon>201604060923368_RenameQuestionVotesToCloseVotesP1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604060927431_RenameQuestionVotesToCloseVotesP2.resx">
+      <DependentUpon>201604060927431_RenameQuestionVotesToCloseVotesP2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604061138166_TriggerForClosingQuestions.resx">
+      <DependentUpon>201604061138166_TriggerForClosingQuestions.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -173,20 +173,20 @@ namespace WebUI.Controllers
                     dataQuery = dataQuery.Where(q => q.ReviewId != null);
 
                 if (query.VoteCountCompare == 1)
-                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count == query.VoteCount);
+                    dataQuery = dataQuery.Where(q => q.CloseVotes.Count == query.VoteCount);
                 else if (query.VoteCountCompare == 2)
-                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count != query.VoteCount);
+                    dataQuery = dataQuery.Where(q => q.CloseVotes.Count != query.VoteCount);
                 else if (query.VoteCountCompare == 3)
-                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count < query.VoteCount);
+                    dataQuery = dataQuery.Where(q => q.CloseVotes.Count < query.VoteCount);
                 else if (query.VoteCountCompare == 4)
-                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count <= query.VoteCount);
+                    dataQuery = dataQuery.Where(q => q.CloseVotes.Count <= query.VoteCount);
                 else if (query.VoteCountCompare == 5)
-                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count > query.VoteCount);
+                    dataQuery = dataQuery.Where(q => q.CloseVotes.Count > query.VoteCount);
                 else if (query.VoteCountCompare == 6)
-                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Count >= query.VoteCount);
+                    dataQuery = dataQuery.Where(q => q.CloseVotes.Count >= query.VoteCount);
 
                 if (query.CloseReason > 0)
-                    dataQuery = dataQuery.Where(q => q.QuestionVotes.Any(qv => qv.VoteTypeId == query.CloseReason));
+                    dataQuery = dataQuery.Where(q => q.CloseVotes.Any(qv => qv.VoteTypeId == query.CloseReason));
 
                 var selectedQuery = dataQuery
                     .Select(q => new
@@ -197,7 +197,7 @@ namespace WebUI.Controllers
                         PostLink = q.Title,
                         Status = q.Deleted ? "Deleted" : (q.Closed ? "Closed" : "Open"),
                         q.LastUpdated,
-                        VoteCount = q.QuestionVotes.Count()
+                        VoteCount = q.CloseVotes.Count()
                     });
 
                 if (!string.IsNullOrWhiteSpace(query.SortAsc))

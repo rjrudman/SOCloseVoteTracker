@@ -13,6 +13,6 @@ namespace Data.Entities
         public string Description { get; set; }
 
         [InverseProperty("VoteType")]
-        public IList<QuestionVote> QuestionVotes { get; set; }
+        public IList<CloseVote> CloseVotes { get; set; }
     }
 }

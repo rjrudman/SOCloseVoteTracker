@@ -42,7 +42,7 @@ END
 ";
 
         const string INSERT_QUESTION_VOTE_SQL = @"
-INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETUTCDATE())
+INSERT INTO CloseVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETUTCDATE())
 ";
 
         public static void Start()
@@ -264,7 +264,7 @@ END
                     context.Database.UseTransaction(trans);
 
                     existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
-                    var existingVotes = existingQuestion?.QuestionVotes
+                    var existingVotes = existingQuestion?.CloseVotes
                         .GroupBy(ev => ev.VoteTypeId)
                         .ToDictionary(g => g.Key, g => g.Count()) ?? new Dictionary<int, int>();
                     
