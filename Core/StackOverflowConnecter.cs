@@ -24,6 +24,7 @@ namespace Core
         private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
         private readonly Regex _undeleteVoteCount = new Regex("^undelete \\((?<numVotes>\\d)\\)$");
         private readonly Regex _deleteVoteCount = new Regex("^delete \\((?<numVotes>\\d)\\)$");
+        private readonly Regex _migratedIdRegex = new Regex("\\/stackoverflow.com\\/posts\\/(?<questionId>\\d+)/revisions");
 
         private IList<int> GetCloseVoteQueue(string mode)
         {
@@ -106,11 +107,11 @@ namespace Core
             if (response.StatusCode != HttpStatusCode.OK)
                 return null;
 
-            if (response.ResponseUri.DnsSafeHost != "stackoverflow.com")
-                return null;
-
             parser.Parse();
 
+            if (response.ResponseUri.DnsSafeHost != "stackoverflow.com")
+                return GetMigrationQuestionInfo(questionId, parser);
+            
             var idElement = parser.Result.QuerySelector("meta[property='og:url']");
             if (idElement != null)
             {
@@ -207,6 +208,41 @@ namespace Core
                 Id = questionId,
                 Tags = tags.ToList(),
                 CloseVotes = votes
+            };
+        }
+
+        private QuestionModel GetMigrationQuestionInfo(int questionId, HtmlParser parser)
+        {
+            var migrationElement = parser.Result.QuerySelector(".question-status b:contains('migrated')");
+            if (migrationElement == null)
+                return null;
+            var migratedFromElement = migrationElement.ParentElement.QuerySelector("a");
+
+            var match = _migratedIdRegex.Match(migratedFromElement.GetAttribute("href"));
+            if (!match.Success)
+                return null;
+            
+            if (int.Parse(match.Groups["questionId"].Value) != questionId)
+                return null;
+
+            var tags = parser.Result.QuerySelectorAll(".post-taglist .post-tag").Select(t => t.TextContent);
+            var title = parser.Result.QuerySelector(".question-hyperlink").TextContent;
+            var askedStr = parser.Result.QuerySelector(".postcell .post-signature .relativetime").GetAttribute("title");
+            var asked = DateTime.ParseExact(askedStr, "yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture).ToUniversalTime();
+
+            return new QuestionModel
+            {
+                Closed = true,
+                Deleted = false,
+                Asked = asked,
+                DeleteVotes = 0,
+                UndeleteVotes = 0,
+                ReopenVotes = 0,
+                DuplicateParentId = null,
+                Title = title,
+                Id = questionId,
+                Tags = tags.ToList(),
+                CloseVotes = new Dictionary<int, int>()
             };
         }
 
