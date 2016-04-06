@@ -1,4 +1,6 @@
-﻿@using WebUI.Controllers
+﻿@using System.Configuration
+@using Data
+@using WebUI.Controllers
 @model HomeController.SearchQuery
 @{
     Layout = null;
@@ -38,6 +40,15 @@
             position: absolute;
             height: 100%;
             width: 100%;
+        }
+        .sortableTableHeader {
+            cursor: pointer;
+        }
+        .sortAsc::after {
+            content: ' ▲'
+        }
+        .sortDesc::after {
+            content: ' ▼'
         }
     </style>
     <title>SOCloseVoteTracker 1.1</title>
@@ -91,7 +102,7 @@
                 </div>
 
                 <br/>
-                <button id="submit" type="submit" class="btn btn-default">Submit</button>
+                <button id="submit" style="margin-bottom: 10px;" type="submit" class="btn btn-default">Search</button>
                 <table id="simpleTable" class="table"></table>
             </div>
         </div>
@@ -101,7 +112,7 @@
                 <b>Server:</b> soclosevotetrackerdbserver.database.windows.net,1433<br/>
                 <b>Username:</b> SOCVRReadonly<br/>
                 <b>Password:</b> 30QITGxS69dpd6aPRlr5mb7pkMvtAv<br/>
-                <b>ADO.NET connection string:</b><br/> Server=tcp:soclosevotetrackerdbserver.database.windows.net,1433;Database=SOCloseVoteTrackerDB;User ID=SOCVRReadonly;Password=30QITGxS69dpd6aPRlr5mb7pkMvtAv;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;<br/>
+                <b>ADO.NET connection string:</b><br/>@ConfigurationManager.ConnectionStrings[DataContext.CONNECTION_STRING_NAME].ConnectionString<br/>
             </div>
 
             <textarea id="txtSql" style="width: 100%; height: 600px">SELECT TOP 100
@@ -112,7 +123,7 @@ WHERE Closed = 0
 GROUP BY Questions.Id, Questions.Title,Questions.LastUpdated,Questions.Closed
 ORDER BY COUNT(*) DESC</textarea>
 
-            <button id="submitSql" type="submit" class="btn btn-default">Submit</button>
+            <button id="submitSql" style="margin-bottom: 10px;" type="submit" class="btn btn-default">Search</button>
             <table id="dynamicTable" class="table"></table>
         </div>
     </div>
@@ -121,6 +132,9 @@ ORDER BY COUNT(*) DESC</textarea>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
+
+    var lastSortAsc = '@actualModel.SortAsc';
+    var lastSortDesc = '@actualModel.SortDesc';
     $(function() {
         var tags = [
             { Value: 1, Text: 'Any Tags' },
@@ -129,16 +143,16 @@ ORDER BY COUNT(*) DESC</textarea>
         fillOptions($('#tags'), 'tags', tags, @actualModel.TagSearchType);
 
         var hasreview = [
-{ Value: 1, Text: 'No' },
-{ Value: 2, Text: 'Yes' },
-{ Value: 0, Text: 'Any' }
+            { Value: 1, Text: 'No' },
+            { Value: 2, Text: 'Yes' },
+            { Value: 0, Text: 'Any' }
         ];
         fillOptions($('#hasreview'), 'hasreview', hasreview, @actualModel.HasReview);
 
         var deleted = [
-    { Value: 1, Text: 'No' },
-    { Value: 2, Text: 'Yes' },
-    { Value: 0, Text: 'Any' }
+            { Value: 1, Text: 'No' },
+            { Value: 2, Text: 'Yes' },
+            { Value: 0, Text: 'Any' }
         ];
         fillOptions($('#deleted'), 'deleted', deleted, @actualModel.Deleted);
 
@@ -233,7 +247,11 @@ ORDER BY COUNT(*) DESC</textarea>
         var head = $('<thead>');
         var headRow = $('<tr>');
         for (i = 0; i < headers.length; i++) {
-            headRow.append('<td>' + headers[i] + '</td>');
+            if (headers[i].toLowerCase() === 'tags') {
+                headRow.append('<td>' + headers[i] + '</td>');
+            } else {
+                headRow.append('<td class="sortableTableHeader">' + headers[i] + '</td>');
+            }
         }
 
         var headerMapping = {};
@@ -268,6 +286,12 @@ ORDER BY COUNT(*) DESC</textarea>
         head.append(headRow);
         table.append(head);
         table.append(body);
+
+        if (lastSortAsc !== '')
+            $('.sortableTableHeader:contains("' + lastSortAsc + '")').addClass('sortAsc');
+
+        if (lastSortDesc !== '')
+            $('.sortableTableHeader:contains("' + lastSortDesc + '")').addClass('sortDesc');
     }
 
     function getDataFilter() {
@@ -277,6 +301,9 @@ ORDER BY COUNT(*) DESC</textarea>
         var closed = $('[name="closed"]:checked').val();
         var deleted = $('[name="deleted"]:checked').val();
         var hasreview = $('[name="hasreview"]:checked').val();
+
+        var sortAsc = lastSortAsc;
+        var sortDesc = lastSortDesc;
 
         var voteCount = $('[name="voteCount"]:checked').val();
         var voteCountCompare = $('[name="voteCountCompare"]:checked').val();
@@ -288,6 +315,8 @@ ORDER BY COUNT(*) DESC</textarea>
             TagSearchType: tagSearchType,
             Closed: closed,
             Deleted: deleted,
+            SortAsc: sortAsc,
+            SortDesc: sortDesc,
             HasReview: hasreview,
             VoteCount: voteCount,
             VoteCountCompare: voteCountCompare,
@@ -302,6 +331,7 @@ ORDER BY COUNT(*) DESC</textarea>
         $.post('/Home/SearchData', requestData, function(results) {
             renderTable($('#simpleTable'), results);
             hideLoading();
+            enableSorting();
         });
     }
 
@@ -322,15 +352,52 @@ ORDER BY COUNT(*) DESC</textarea>
         $.post('/Home/HideQuestion', { questionId: questionId }, function(results) {});
     }
 
+    function displaySorting() {
+
+    }
+
+    function enableSorting() {
+        $('.sortableTableHeader').click(function(element) {
+            var header = $(element.currentTarget);
+
+            var hadSortAsc = header.hasClass('sortAsc');
+            var hadSortDesc = header.hasClass('sortDesc');
+
+            $('.sortAsc').removeClass('sortAsc');
+            $('.sortDesc').removeClass('sortDesc');
+
+            if (hadSortAsc) {
+                header.addClass('sortDesc');
+            } else if (!hadSortDesc) {
+                header.addClass('sortAsc');
+            }
+
+            lastSortAsc = $('.sortAsc').text();
+            lastSortDesc = $('.sortDesc').text();
+
+            makeRequest();
+        });
+    }
+
     function showLoading() {
         $('#topContainer').hide();
         $('#cover').fadeIn();
     }
-    function hideLoading() {
 
-        $('#cover').fadeOut(function () { $('#topContainer').show(); });
+    function hideLoading() {
+        $('#cover').fadeOut(function() { $('#topContainer').show(); });
     }
 
 </script>
+    <script type="text/javascript">
+  var appInsights=window.appInsights||function(config){
+    function r(config){t[config]=function(){var i=arguments;t.queue.push(function(){t[config].apply(t,i)})}}var t={config:config},u=document,e=window,o="script",s=u.createElement(o),i,f;for(s.src=config.url||"//az416426.vo.msecnd.net/scripts/a/ai.0.js",u.getElementsByTagName(o)[0].parentNode.appendChild(s),t.cookie=u.cookie,t.queue=[],i=["Event","Exception","Metric","PageView","Trace"];i.length;)r("track"+i.pop());return r("setAuthenticatedUserContext"),r("clearAuthenticatedUserContext"),config.disableExceptionTracking||(i="onerror",r("_"+i),f=e[i],e[i]=function(config,r,u,e,o){var s=f&&f(config,r,u,e,o);return s!==!0&&t["_"+i](config,r,u,e,o),s}),t
+    }({
+        instrumentationKey:"d9c9c00d-3ead-4a25-a477-57b8ede83acd"
+    });
+
+    window.appInsights=appInsights;
+    appInsights.trackPageView();
+    </script>
 </body>
 </html>
