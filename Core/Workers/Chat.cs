@@ -94,6 +94,9 @@ namespace Core.Workers
 
         private static void ParseContent(int userId, string content)
         {
+            if (string.IsNullOrWhiteSpace(content))
+                return;
+
             if (!content.Contains(@"<a href=""//stackoverflow.com/questions/tagged/cv-pls"">"))
                 return;
 

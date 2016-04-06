@@ -144,6 +144,10 @@
     <Compile Include="Migrations\201604061138166_TriggerForClosingQuestions.Designer.cs">
       <DependentUpon>201604061138166_TriggerForClosingQuestions.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604061149135_TriggerForDeletingQuestions.cs" />
+    <Compile Include="Migrations\201604061149135_TriggerForDeletingQuestions.Designer.cs">
+      <DependentUpon>201604061149135_TriggerForDeletingQuestions.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Statuses\OrderStatusChangeType.cs" />
@@ -212,6 +216,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604061138166_TriggerForClosingQuestions.resx">
       <DependentUpon>201604061138166_TriggerForClosingQuestions.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604061149135_TriggerForDeletingQuestions.resx">
+      <DependentUpon>201604061149135_TriggerForDeletingQuestions.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
