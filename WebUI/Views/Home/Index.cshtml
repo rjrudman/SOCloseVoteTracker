@@ -332,6 +332,10 @@ ORDER BY COUNT(*) DESC</textarea>
             renderTable($('#simpleTable'), results);
             hideLoading();
             enableSorting();
+        })
+        .fail(function() {
+            hideLoading();
+            renderTable($('#simpleTable'), [{ Error: 'Error occured while searching.'}]);
         });
     }
 
@@ -341,6 +345,10 @@ ORDER BY COUNT(*) DESC</textarea>
         $.post('/Home/RunSQL', { sql: sql }, function(results) {
             renderTable($('#dynamicTable'), results);
             hideLoading();
+        })
+        .fail(function() {
+            hideLoading();
+            renderTable($('#simpleTable'), [{ Error: 'Error occured while searching.'}]);
         });
     }
 
