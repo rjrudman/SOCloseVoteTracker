@@ -69,9 +69,15 @@ INSERT INTO QuestionVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questi
                 //Query this every 15 minutes (except on the hour)
                 RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "15,30,45 * * * *");
 
-                //Query this every hour
-                RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 * * * *");
-                
+                //Query this every hour (except every four hours)
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23 * * *");
+
+                //Every 4 hours (except at midnight)
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFourHours(), "0 4,8,12,16,20 * * *");
+
+                //Every day
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
+
                 Chat.JoinAndWatchRoom(Utils.GlobalConfiguration.ChatRoomID);
 
                 PollFrontPage();
@@ -131,6 +137,16 @@ END
         public static void PollActiveQuestionsHour()
         {
             PollActiveQuestions(TimeSpan.FromMinutes(60));
+        }
+
+        public static void PollActiveQuestionsFourHours()
+        {
+            PollActiveQuestions(TimeSpan.FromHours(4));
+        }
+
+        public static void PollActiveQuestionsDay()
+        {
+            PollActiveQuestions(TimeSpan.FromHours(24));
         }
         
         public static void PollActiveQuestions(TimeSpan timeLastActive)
