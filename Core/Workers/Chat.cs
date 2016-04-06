@@ -88,6 +88,7 @@ namespace Core.Workers
                 foreach (var message in messages)
                     ParseContent(message.userId, message.content);
             };
+            socket.OnClose += (sender, args) => { JoinAndWatchRoom(roomId); };
             socket.Connect();
         }
 
