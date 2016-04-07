@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Threading;
+using System.Web;
 using System.Web.Mvc;
 using Dapper;
 using Data;
@@ -213,7 +214,7 @@ namespace WebUI.Controllers
                     {
                         q.QuestionId,
                         q.ReviewId,
-                        q.PostLink,
+                        PostLink = HttpUtility.HtmlEncode(q.PostLink),
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Status,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
