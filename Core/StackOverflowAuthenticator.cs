@@ -44,7 +44,7 @@ namespace Core
 
                     var response = throttler.Execute();
                     if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Found)
-                        throw new Exception("Failed to authenticate");
+                        throw new Exception("Failed to authenticate. Status recieved: " + response.StatusCode);
 
                     AuthCookies.AddRange(response.Cookies);
                     _refreshCookieTime = AuthCookies.Min(ac => ac.Expires);
