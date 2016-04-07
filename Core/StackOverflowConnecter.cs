@@ -180,20 +180,18 @@ namespace Core
             if (!string.IsNullOrWhiteSpace(numReopenVotesElement?.TextContent))
                 numReopenVotes = int.Parse(numReopenVotesElement.TextContent);
 
-            var requireCloseVoteDetails = false;
-            if (!isClosed)
+            var votes = new Dictionary<int, int>();
+            if (!isClosed && numCloseVotes != 0)
             {
                 using (var context = new DataContext())
                 {
                     var question = context.Questions.FirstOrDefault(q => q.Id == questionId);
                     if (question == null || question.CloseVotes.Count != numCloseVotes)
-                        requireCloseVoteDetails = true;
+                        votes = GetCloseVotes(questionId);
+                    else
+                        votes = null;
                 }
             }
-
-            var votes = requireCloseVoteDetails
-                ? GetCloseVotes(questionId)
-                : null;
             
             return new QuestionModel
             {
