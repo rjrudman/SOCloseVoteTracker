@@ -143,9 +143,10 @@ namespace WebUI.Controllers
             using (var context = new DataContext())
             {
                 IQueryable<Question> dataQuery = context.Questions;
-                var tags = query.TagSearch?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                IEnumerable<string> tags = query.TagSearch?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (tags?.Any() ?? false)
                 {
+                    tags = tags.Select(t => t.Trim());
                     if (query.TagSearchType == 1) //Any of the tags
                         dataQuery = dataQuery.Where(q => q.Tags.Any(t => tags.Contains(t.TagName)));
                     else
