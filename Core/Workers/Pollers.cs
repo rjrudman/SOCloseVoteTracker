@@ -264,7 +264,7 @@ END
 
         private static void UpsertQuestionInformation(QuestionModel question)
         {
-            var newCloseVotesFound = false;
+            var numCloseVotesChanged = false;
             Question existingQuestion;
             using (var context = new DataContext())
             {
@@ -297,19 +297,16 @@ END
                                 numToInsert = voteGroup.Value - existingVotes[voteGroup.Key];
                             else
                                 numToInsert = voteGroup.Value;
-
-                            if (numToInsert < 0)
+                            
+                            for (var i = 0; i < numToInsert; i++)
                             {
-                                for (var i = 0; i < numToInsert; i++)
-                                {
-                                    connection.Execute(INSERT_QUESTION_VOTE_SQL, new {questionId = question.Id, voteTypeId = voteGroup.Key}, trans);
-                                    newCloseVotesFound = true;
-                                }
+                                connection.Execute(INSERT_QUESTION_VOTE_SQL, new {questionId = question.Id, voteTypeId = voteGroup.Key}, trans);
+                                numCloseVotesChanged = true;
                             }
                         }
                         foreach (var existingVote in existingVotes)
                         {
-                            var numToDelete = 0;
+                            int numToDelete;
                             if (question.CloseVotes.ContainsKey(existingVote.Key))
                                 numToDelete = existingVote.Value - question.CloseVotes[existingVote.Key];
                             else
@@ -319,7 +316,7 @@ END
                             for (var i = 0; i < numToDelete; i++)
                             {
                                 connection.Execute(DELETE_NEWEST_VOTE_SQL, new { questionId = question.Id, voteTypeId = existingVote.Key }, trans);
-                                newCloseVotesFound = true;
+                                numCloseVotesChanged = true;
                             }
                         }
                     }
@@ -340,7 +337,7 @@ END
                     || (existingQuestion.Closed != question.Closed)
                     || (existingQuestion.DeleteVotes != question.DeleteVotes)
                     || (existingQuestion.UndeleteVotes != question.UndeleteVotes)
-                    || (newCloseVotesFound)
+                    || (numCloseVotesChanged)
                     || (existingQuestion.ReopenVotes != question.ReopenVotes)
                     )
                 {
