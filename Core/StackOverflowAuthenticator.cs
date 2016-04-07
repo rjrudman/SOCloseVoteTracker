@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Core.RestRequests;
 using RestSharp;
 
@@ -42,6 +43,8 @@ namespace Core
                     throttler.Request.AddParameter("password", _password);
 
                     var response = throttler.Execute();
+                    if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Found)
+                        throw new Exception("Failed to authenticate");
 
                     AuthCookies.AddRange(response.Cookies);
                     _refreshCookieTime = AuthCookies.Min(ac => ac.Expires);

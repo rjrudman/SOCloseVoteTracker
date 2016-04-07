@@ -116,7 +116,7 @@ namespace Core.Workers
 
         public static void QueryQuestionAndLogRequest(int userId, int questionId, string fullMessage)
         {
-            Pollers.QueryQuestion(questionId, DateTime.Now, false);
+            Pollers.QueryQuestion(questionId, false);
 
             using (var connection = DataContext.PlainConnection())
                 connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });
