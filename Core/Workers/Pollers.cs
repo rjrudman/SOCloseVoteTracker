@@ -228,18 +228,6 @@ END
                 else
                     BackgroundJob.Schedule(() => QueryQuestion(questionId, forceEnqueue), after.Value);
             }
-
-        }
-
-        //Backwards compatability for a few days
-        public static void QueryQuestion(int questionId)
-        {
-            QueryQuestion(questionId, false);
-        }
-
-        public static void QueryQuestion(int questionId, DateTime DONOTUSE, bool forceEnqueue)
-        {
-            QueryQuestion(questionId, forceEnqueue);
         }
 
         public static void QueryQuestion(int questionId, bool forceEnqueue)
