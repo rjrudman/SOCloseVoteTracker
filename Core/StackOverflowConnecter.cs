@@ -254,7 +254,7 @@ namespace Core
             
             var response = throttler.Execute();
             if (response.StatusCode != HttpStatusCode.OK) //We're throttled to 3 seconds. Exceeding this throttle returns a 409 response. Throwing an exception will put it into the retry queue.
-                throw new Exception("Failed to load close dialog");
+                throw new Exception("Failed to load close dialog. Status: " + response.StatusCode);
 
             var parser = new HtmlParser(response.Content);
             parser.Parse();
