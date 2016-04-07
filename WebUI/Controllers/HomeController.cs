@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Threading;
+using System.Web;
 using System.Web.Mvc;
 using Dapper;
 using Data;
@@ -142,9 +143,10 @@ namespace WebUI.Controllers
             using (var context = new DataContext())
             {
                 IQueryable<Question> dataQuery = context.Questions;
-                var tags = query.TagSearch?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                IEnumerable<string> tags = query.TagSearch?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (tags?.Any() ?? false)
                 {
+                    tags = tags.Select(t => t.Trim());
                     if (query.TagSearchType == 1) //Any of the tags
                         dataQuery = dataQuery.Where(q => q.Tags.Any(t => tags.Contains(t.TagName)));
                     else
@@ -213,7 +215,7 @@ namespace WebUI.Controllers
                     {
                         q.QuestionId,
                         q.ReviewId,
-                        q.PostLink,
+                        PostLink = HttpUtility.HtmlEncode(q.PostLink),
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Status,
                         LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",

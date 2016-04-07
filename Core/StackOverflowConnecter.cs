@@ -167,7 +167,7 @@ namespace Core
 
                 var match = _questionIdRegex.Match(url);
                 dupeParent = int.Parse(match.Groups["questionID"].Value);
-                Pollers.QueryQuestion(dupeParent.Value, DateTime.Now, false);
+                Pollers.QueryQuestion(dupeParent.Value, false);
             }
             
             var numCloseVotes = 0;
@@ -181,7 +181,7 @@ namespace Core
                 numReopenVotes = int.Parse(numReopenVotesElement.TextContent);
 
             var requireCloseVoteDetails = false;
-            if (!isClosed && numCloseVotes > 0)
+            if (!isClosed)
             {
                 using (var context = new DataContext())
                 {
@@ -193,7 +193,7 @@ namespace Core
 
             var votes = requireCloseVoteDetails
                 ? GetCloseVotes(questionId)
-                : new Dictionary<int, int>();
+                : null;
             
             return new QuestionModel
             {

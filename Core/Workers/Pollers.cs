@@ -45,6 +45,18 @@ END
 INSERT INTO CloseVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETUTCDATE())
 ";
 
+        const string DELETE_NEWEST_VOTE_SQL = @"
+WITH q AS
+(
+	SELECT TOP 1 *
+	FROM CloseVotes
+	WHERE QuestionId = @questionId AND VoteTypeId = @voteTypeId
+	ORDER BY FirstTimeSeen DESC
+)
+DELETE
+FROM q
+";
+
         public static void Start()
         {
             Database.SetInitializer(new MigrateDatabaseToLatestVersion<DataContext, Configuration>());
@@ -200,32 +212,25 @@ END
         {
             using (var trans = con.BeginTransaction())
             {
-                var newQueueTime = DateTime.Now;
+                var newQueueTime = DateTime.UtcNow;
                 if (after.HasValue)
                     newQueueTime = newQueueTime.Add(after.Value);
 
                 var nextQueueTime = con.Query<DateTime?>("SELECT MIN(ProcessTime) FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id", new {id = questionId}, trans).FirstOrDefault();
-                if (nextQueueTime != null && nextQueueTime.Value > DateTime.Now && nextQueueTime.Value < newQueueTime)
+                if (nextQueueTime != null && nextQueueTime.Value > DateTime.UtcNow && nextQueueTime.Value < newQueueTime)
                     return;
 
                 con.Execute("INSERT INTO QueuedQuestionQueries(QuestionId, ProcessTime) VALUES (@id, @newQueueTime)", new {newQueueTime = newQueueTime, id = questionId}, trans);
                 trans.Commit();
 
                 if (after == null)
-                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, DateTime.Now, forceEnqueue));
+                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, forceEnqueue));
                 else
-                    BackgroundJob.Schedule(() => QueryQuestion(questionId, DateTime.Now, forceEnqueue), after.Value);
+                    BackgroundJob.Schedule(() => QueryQuestion(questionId, forceEnqueue), after.Value);
             }
-
         }
 
-        //Backwards compatability for a few days
-        public static void QueryQuestion(int questionId, DateTime dateRequested)
-        {
-            QueryQuestion(questionId, dateRequested, false);
-        }
-
-        public static void QueryQuestion(int questionId, DateTime dateRequested, bool forceEnqueue)
+        public static void QueryQuestion(int questionId, bool forceEnqueue)
         {
             var connecter = new StackOverflowConnecter();
             using (var con = DataContext.PlainConnection())
@@ -252,7 +257,7 @@ END
 
         private static void UpsertQuestionInformation(QuestionModel question)
         {
-            var newCloseVotesFound = false;
+            var numCloseVotesChanged = false;
             Question existingQuestion;
             using (var context = new DataContext())
             {
@@ -276,18 +281,36 @@ END
                         connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
                     }
 
-                    foreach (var voteGroup in question.CloseVotes)
+                    if (question.CloseVotes != null)
                     {
-                        int numToInsert;
-                        if (existingVotes.ContainsKey(voteGroup.Key))
-                            numToInsert = voteGroup.Value - existingVotes[voteGroup.Key];
-                        else
-                            numToInsert = voteGroup.Value;
-
-                        for (var i = 0; i < numToInsert; i++)
+                        foreach (var voteGroup in question.CloseVotes)
                         {
-                            connection.Execute(INSERT_QUESTION_VOTE_SQL, new {questionId = question.Id, voteTypeId = voteGroup.Key}, trans);
-                            newCloseVotesFound = true;
+                            int numToInsert;
+                            if (existingVotes.ContainsKey(voteGroup.Key))
+                                numToInsert = voteGroup.Value - existingVotes[voteGroup.Key];
+                            else
+                                numToInsert = voteGroup.Value;
+                            
+                            for (var i = 0; i < numToInsert; i++)
+                            {
+                                connection.Execute(INSERT_QUESTION_VOTE_SQL, new {questionId = question.Id, voteTypeId = voteGroup.Key}, trans);
+                                numCloseVotesChanged = true;
+                            }
+                        }
+                        foreach (var existingVote in existingVotes)
+                        {
+                            int numToDelete;
+                            if (question.CloseVotes.ContainsKey(existingVote.Key))
+                                numToDelete = existingVote.Value - question.CloseVotes[existingVote.Key];
+                            else
+                                numToDelete = existingVote.Value;
+
+                            //Delete newest vote of that type
+                            for (var i = 0; i < numToDelete; i++)
+                            {
+                                connection.Execute(DELETE_NEWEST_VOTE_SQL, new { questionId = question.Id, voteTypeId = existingVote.Key }, trans);
+                                numCloseVotesChanged = true;
+                            }
                         }
                     }
 
@@ -307,7 +330,7 @@ END
                     || (existingQuestion.Closed != question.Closed)
                     || (existingQuestion.DeleteVotes != question.DeleteVotes)
                     || (existingQuestion.UndeleteVotes != question.UndeleteVotes)
-                    || (newCloseVotesFound)
+                    || (numCloseVotesChanged)
                     || (existingQuestion.ReopenVotes != question.ReopenVotes)
                     )
                 {

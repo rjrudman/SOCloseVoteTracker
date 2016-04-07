@@ -22,7 +22,7 @@ namespace Web.Controllers
         public ActionResult Poll(IList<int> questionIds)
         {
             foreach(var questionId in questionIds)
-                Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2));
+                Pollers.QueueQuestionQuery(questionId);
 
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
