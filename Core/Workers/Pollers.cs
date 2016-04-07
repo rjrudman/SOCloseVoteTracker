@@ -237,6 +237,11 @@ END
             QueryQuestion(questionId, false);
         }
 
+        public static void QueryQuestion(int questionId, DateTime DONOTUSE, bool forceEnqueue)
+        {
+            QueryQuestion(questionId, forceEnqueue);
+        }
+
         public static void QueryQuestion(int questionId, bool forceEnqueue)
         {
             var connecter = new StackOverflowConnecter();
