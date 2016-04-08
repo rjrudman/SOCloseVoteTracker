@@ -59,6 +59,7 @@
     <Compile Include="DataContext.cs" />
     <Compile Include="Entities\CloseVote.cs" />
     <Compile Include="Entities\CVPlsRequest.cs" />
+    <Compile Include="Entities\Log.cs" />
     <Compile Include="Entities\OrderStatusChange.cs" />
     <Compile Include="Entities\Question.cs" />
     <Compile Include="Entities\Tag.cs" />
