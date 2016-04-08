@@ -72,7 +72,7 @@
     <div class="tab-content">
         <div role="tabpanel" class="tab-pane active" id="Interface">
             <div class="options">
-                <a id="idHardLink" style="float: right;margin-top: 15px;" href="javascript:void(0);">PermaLink Filter</a>
+                <a id="idHardLink" style="float: right; margin-top: 15px;" href="javascript:void(0);">PermaLink Filter</a>
                 <div class="optionItem">
                     <label class="filterName">Tags</label>
                     <input id="txtTags" type="text" value="@actualModel.TagSearch"/>
@@ -104,6 +104,8 @@
 
                 <br/>
                 <button id="submit" style="margin-bottom: 10px;" type="submit" class="btn btn-default">Search</button>
+
+                <a id="refreshQuestions" style="float: right;margin-top: 15px; display: none;" href="javascript:void(0);">Refresh questions in table</a>
                 <table id="simpleTable" class="table"></table>
             </div>
         </div>
@@ -201,6 +203,7 @@ ORDER BY COUNT(*) DESC</textarea>
 
         $('#submit').click(makeRequest);
         $('#submitSql').click(makeSqlRequest);
+        $('#refreshQuestions').click(refreshCurrentQuestions);
 
         $('#idHardLink').click(function() {
             var filterData = getDataFilter();
@@ -267,7 +270,7 @@ ORDER BY COUNT(*) DESC</textarea>
                 var dataItem = data[i][headerName];
                 var headerNameLower = headerName.toLowerCase();
                 if (headerNameLower === 'questionid') {
-                    htmlRow.append('<td>' + dataItem + ' <a name="' + dataItem + '" href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
+                    htmlRow.append('<td class="questionId">' + dataItem + ' <a name="' + dataItem + '" href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
                 } else if (headerNameLower === 'reviewid' && dataItem !== null) {
                     htmlRow.append('<td><a target="_blank" href="/Home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
                 } else if (headerNameLower === 'postlink' && dataItem !== null && data[i][headerMapping['questionid']]) {
@@ -330,12 +333,14 @@ ORDER BY COUNT(*) DESC</textarea>
         showLoading();
         $.post('/Home/SearchData', requestData, function(results) {
             renderTable($('#simpleTable'), results);
+            $('#refreshQuestions').show();
             hideLoading();
             enableSorting();
         })
         .fail(function() {
-            hideLoading();
             renderTable($('#simpleTable'), [{ Error: 'Error occured while searching.'}]);
+            $('#refreshQuestions').hide();
+            hideLoading();
         });
     }
 
@@ -360,8 +365,20 @@ ORDER BY COUNT(*) DESC</textarea>
         $.post('/Home/HideQuestion', { questionId: questionId }, function(results) {});
     }
 
-    function displaySorting() {
+    function refreshCurrentQuestions() {
+        var ids = [];
+        var questionIdElements = $(".questionId a");
+        for (var i = 0; i < $(".questionId a").length; i++) {
+            var questionIdElement = $(questionIdElements[i]);
+            var questionId = parseInt(questionIdElement.attr('name'));
+            ids.push(questionId);
+        }
 
+        showLoading();
+        $.post('/Home/EnqueueQuestionIds', { questionIds: ids }).always(function() {
+            hideLoading();
+            $('#refreshQuestions').fadeOut();
+        });
     }
 
     function enableSorting() {

@@ -41,9 +41,25 @@ namespace WebUI.Controllers
             var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
             var req = new RestRequest("Home/PollQuestion", Method.GET);
             req.AddParameter("questionId", questionId);
-            rc.Execute(req); //Not majorly important if this fails.
+            var res = rc.Execute(req);
+            if (res.StatusCode != HttpStatusCode.NoContent)
+                Logger.LogInfo($"Failed to enqueue question. Code: {res.StatusCode}");
         }
 
+        public ActionResult EnqueueQuestionIds(List<int> questionIds)
+        {
+            new Thread(() =>
+            {
+                var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
+                var req = new RestRequest("Home/Poll", Method.GET);
+                req.AddParameter("questionIds", questionIds);
+                var res = rc.Execute(req);
+                if (res.StatusCode != HttpStatusCode.NoContent)
+                    Logger.LogInfo($"Failed to enqueue questions. Code: {res.StatusCode}");
+            }).Start();
+            
+            return new HttpStatusCodeResult(HttpStatusCode.NoContent);
+        }
         public ActionResult EnqueueAndRedirect(int questionId)
         {
             new Thread(() => EnqueueQuestionId(questionId)).Start();

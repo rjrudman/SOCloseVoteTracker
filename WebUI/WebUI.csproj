@@ -237,6 +237,10 @@
     <None Include="Project_Readme.html" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Core\Core.csproj">
+      <Project>{05A43F89-93F2-4FD3-8C79-7B16CEB7DE88}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Data\Data.csproj">
       <Project>{7DD019C3-42A1-4F45-B2E4-1EE18BCD7CAF}</Project>
       <Name>Data</Name>
