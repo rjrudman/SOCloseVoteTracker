@@ -7,6 +7,7 @@ using System.Net;
 using System.Threading;
 using System.Web;
 using System.Web.Mvc;
+using Core;
 using Dapper;
 using Data;
 using Data.Entities;
@@ -46,6 +47,7 @@ namespace WebUI.Controllers
         public ActionResult EnqueueAndRedirect(int questionId)
         {
             new Thread(() => EnqueueQuestionId(questionId)).Start();
+            Logger.LogInfo($"Question enqueued: {questionId}");
             return Redirect($"http://stackoverflow.com/q/{questionId}");
         }
 
@@ -60,6 +62,7 @@ namespace WebUI.Controllers
                         EnqueueQuestionId(questionId.Value);
                 }
             }).Start();
+            Logger.LogInfo($"Review enqueued: {reviewId}");
             return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
         }
 

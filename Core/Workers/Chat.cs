@@ -20,7 +20,7 @@ namespace Core.Workers
         private static readonly Regex QuestionIdRegex = new Regex("\\/(q(uestions)?|p(osts)?)\\/(?<questionID>\\d+)\\/.*");
         public static void JoinAndWatchRoom(long roomId)
         {
-            Logger.LogInfo(@"Joining room {roomId}");
+            Logger.LogInfo($"Joining room {roomId}");
             
             var authenticator = new StackOverflowAuthenticator(GlobalConfiguration.UserName, GlobalConfiguration.Password);
             var restClient = new RestClient("http://chat.stackoverflow.com/");
