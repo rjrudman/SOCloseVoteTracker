@@ -274,7 +274,7 @@ ORDER BY COUNT(*) DESC</textarea>
                 var dataItem = data[i][headerName];
                 var headerNameLower = headerName.toLowerCase();
                 if (headerNameLower === 'questionid') {
-                    htmlRow.append('<td class="questionId">' + dataItem + ' <a name="' + dataItem + '" href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
+                    htmlRow.append('<td class="questionId">' + dataItem + '<br/><a name="' + dataItem + '" href="javascript:dismissItem(' + dataItem + ')">(Dismiss)</a></td>');
                 } else if (headerNameLower === 'reviewid' && dataItem !== null) {
                     htmlRow.append('<td><a target="_blank" href="/Home/EnqueueAndRedirectReview?reviewId=' + dataItem + '">' + dataItem + '</a></td>');
                 } else if (headerNameLower === 'postlink' && dataItem !== null && data[i][headerMapping['questionid']]) {
