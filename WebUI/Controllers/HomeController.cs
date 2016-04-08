@@ -198,7 +198,7 @@ namespace WebUI.Controllers
                         Tags = q.Tags,
                         PostLink = q.Title,
                         Status = q.Deleted ? "Deleted" : (q.Closed ? "Closed" : "Open"),
-                        q.LastUpdated,
+                        LastTimeActive = q.LastTimeActive ?? q.LastUpdated,
                         VoteCount = q.CloseVotes.Count()
                     });
 
@@ -218,7 +218,7 @@ namespace WebUI.Controllers
                         PostLink = HttpUtility.HtmlEncode(q.PostLink),
                         Tags = string.Join(", ", q.Tags.Select(t => t.TagName)),
                         q.Status,
-                        LastUpdated = q.LastUpdated.ToString("yy-MM-dd hh:mm:ss") + " GMT",
+                        LastTimeActive = q.LastTimeActive.ToString("yy-MM-dd hh:mm:ss") + " GMT",
                         q.VoteCount
                     });
 
