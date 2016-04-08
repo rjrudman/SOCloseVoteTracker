@@ -26,6 +26,7 @@ namespace Data
 
         public DbSet<Question> Questions { get; set; }
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<Log> Logs { get; set; }
         public DbSet<VoteType> VoteTypes { get; set; }
         public DbSet<CloseVote> CloseVotes { get; set; }
         public DbSet<CVPlsRequest> CVPlsRequests { get; set; }
@@ -36,6 +37,7 @@ namespace Data
         {
             modelBuilder.Entity<Question>().ToTable("Questions");
             modelBuilder.Entity<Tag>().ToTable("Tags");
+            modelBuilder.Entity<Log>().ToTable("Logs");
             modelBuilder.Entity<VoteType>().ToTable("VoteTypes");
             modelBuilder.Entity<CloseVote>().ToTable("CloseVotes");
             modelBuilder.Entity<CVPlsRequest>().ToTable("CVPlsRequests");

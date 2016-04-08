@@ -20,6 +20,7 @@ namespace Core.Workers
         private static readonly Regex QuestionIdRegex = new Regex("\\/(q(uestions)?|p(osts)?)\\/(?<questionID>\\d+)\\/.*");
         public static void JoinAndWatchRoom(long roomId)
         {
+            Logger.LogInfo(@"Joining room {roomId}");
             
             var authenticator = new StackOverflowAuthenticator(GlobalConfiguration.UserName, GlobalConfiguration.Password);
             var restClient = new RestClient("http://chat.stackoverflow.com/");
@@ -43,7 +44,6 @@ namespace Core.Workers
 
             var eventsResponse = restClient.Execute(eventsRequest);
             var eventsResponseSerialized = JsonConvert.DeserializeAnonymousType(eventsResponse.Content, new {time = 0});
-
             
             var wsAuthRequest = new RestRequest("ws-auth", Method.POST);
             authenticator.AuthenticateRequest(wsAuthRequest);
@@ -62,7 +62,7 @@ namespace Core.Workers
             {
                 var messages = new[] {new { userId = 0, content = string.Empty}}.ToList();
                 messages.Clear();
-                
+
                 try
                 {
                     var obj = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(messageArgs.Data);
@@ -84,11 +84,19 @@ namespace Core.Workers
                         }
                     }
 
-                } catch(Exception) { }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogException(ex, "Failed to parse chat");
+                }
                 foreach (var message in messages)
                     ParseContent(message.userId, message.content);
             };
-            socket.OnClose += (sender, args) => { JoinAndWatchRoom(roomId); };
+            socket.OnClose += (sender, args) =>
+            {
+                Logger.LogInfo("Chat was closed.");
+                JoinAndWatchRoom(roomId);
+            };
             socket.Connect();
         }
 
