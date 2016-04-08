@@ -153,6 +153,10 @@
     <Compile Include="Migrations\201604061204218_CleanupExistingData.Designer.cs">
       <DependentUpon>201604061204218_CleanupExistingData.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604080331325_StartLogging.cs" />
+    <Compile Include="Migrations\201604080331325_StartLogging.Designer.cs">
+      <DependentUpon>201604080331325_StartLogging.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Statuses\OrderStatusChangeType.cs" />
@@ -227,6 +231,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604061204218_CleanupExistingData.resx">
       <DependentUpon>201604061204218_CleanupExistingData.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604080331325_StartLogging.resx">
+      <DependentUpon>201604080331325_StartLogging.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
