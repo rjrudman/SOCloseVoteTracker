@@ -105,7 +105,8 @@
                 <br/>
                 <button id="submit" style="margin-bottom: 10px;" type="submit" class="btn btn-default">Search</button>
 
-                <a id="refreshQuestions" style="float: right;margin-top: 15px; display: none;" href="javascript:void(0);">Refresh questions in table</a>
+                <p id="simpleRecordCount" style="float: right; margin-top: 15px; margin-left: 15px; display: none;"></p>
+                <a id="simpleRefreshQuestions" style="float: right;margin-top: 15px; display: none;" href="javascript:void(0);">Refresh questions in table</a>
                 <table id="simpleTable" class="table"></table>
             </div>
         </div>
@@ -127,6 +128,8 @@ GROUP BY Questions.Id, Questions.Title,Questions.LastUpdated,Questions.Closed
 ORDER BY COUNT(*) DESC</textarea>
 
             <button id="submitSql" style="margin-bottom: 10px;" type="submit" class="btn btn-default">Search</button>
+            <p id="dynamicRecordCount" style="float: right; margin-top: 15px; margin-left: 15px; display: none;"></p>
+            <a id="dynamicRefreshQuestions" style="float: right;margin-top: 15px; display: none;" href="javascript:void(0);">Refresh questions in table</a>
             <table id="dynamicTable" class="table"></table>
         </div>
     </div>
@@ -203,7 +206,8 @@ ORDER BY COUNT(*) DESC</textarea>
 
         $('#submit').click(makeRequest);
         $('#submitSql').click(makeSqlRequest);
-        $('#refreshQuestions').click(refreshCurrentQuestions);
+        $('#simpleRefreshQuestions').click(() => refreshCurrentQuestions('#simpleRefreshQuestions'));
+        $('#dynamicRefreshQuestions').click(() => refreshCurrentQuestions('#dynamicRefreshQuestions'));
 
         $('#idHardLink').click(function() {
             var filterData = getDataFilter();
@@ -333,13 +337,16 @@ ORDER BY COUNT(*) DESC</textarea>
         showLoading();
         $.post('/Home/SearchData', requestData, function(results) {
             renderTable($('#simpleTable'), results);
-            $('#refreshQuestions').show();
+            $('#simpleRefreshQuestions').show();
+            $('#simpleRecordCount').text(results.length + ' record(s)');
+            $('#simpleRecordCount').show();
             hideLoading();
             enableSorting();
         })
         .fail(function() {
             renderTable($('#simpleTable'), [{ Error: 'Error occured while searching.'}]);
-            $('#refreshQuestions').hide();
+            $('#simpleRefreshQuestions').hide();
+            $('#simpleRecordCount').hide();
             hideLoading();
         });
     }
@@ -349,11 +356,16 @@ ORDER BY COUNT(*) DESC</textarea>
         showLoading();
         $.post('/Home/RunSQL', { sql: sql }, function(results) {
             renderTable($('#dynamicTable'), results);
+            $('#dynamicRefreshQuestions').show();
+            $('#dynamicRecordCount').text(results.length + ' record(s)');
+            $('#dynamicRecordCount').show();
             hideLoading();
         })
         .fail(function() {
             hideLoading();
             renderTable($('#simpleTable'), [{ Error: 'Error occured while searching.'}]);
+            $('#dynamicRefreshQuestions').hide();
+            $('#dynamicRecordCount').hide();
         });
     }
 
@@ -365,7 +377,7 @@ ORDER BY COUNT(*) DESC</textarea>
         $.post('/Home/HideQuestion', { questionId: questionId }, function(results) {});
     }
 
-    function refreshCurrentQuestions() {
+    function refreshCurrentQuestions(refreshQuestionsLink) {
         var ids = [];
         var questionIdElements = $(".questionId a");
         for (var i = 0; i < $(".questionId a").length; i++) {
@@ -377,7 +389,7 @@ ORDER BY COUNT(*) DESC</textarea>
         showLoading();
         $.post('/Home/EnqueueQuestionIds', { questionIds: ids }).always(function() {
             hideLoading();
-            $('#refreshQuestions').fadeOut();
+            $(refreshQuestionsLink).fadeOut();
         });
     }
 
