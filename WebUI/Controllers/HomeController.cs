@@ -52,7 +52,8 @@ namespace WebUI.Controllers
             {
                 var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
                 var req = new RestRequest("Home/Poll", Method.POST);
-                req.AddParameter("questionIds", questionIds);
+                foreach(var questionId in questionIds)
+                    req.AddParameter("questionIds", questionId);
                 var res = rc.Execute(req);
                 if (res.StatusCode != HttpStatusCode.NoContent)
                     Logger.LogInfo($"Failed to enqueue questions. Code: {res.StatusCode}");
