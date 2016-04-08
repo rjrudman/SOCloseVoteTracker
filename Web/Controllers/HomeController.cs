@@ -16,7 +16,7 @@ namespace Web.Controllers
 
         public ActionResult PollQuestion(int questionId)
         {
-            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2));
+            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true);
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
 
