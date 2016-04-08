@@ -20,6 +20,7 @@ namespace Web.Controllers
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
 
+        [HttpPost]
         public ActionResult Poll(IList<int> questionIds)
         {
             Logger.LogInfo($"Polling questions: {string.Join(",", questionIds)}");

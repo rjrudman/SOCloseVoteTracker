@@ -51,7 +51,7 @@ namespace WebUI.Controllers
             new Thread(() =>
             {
                 var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
-                var req = new RestRequest("Home/Poll", Method.GET);
+                var req = new RestRequest("Home/Poll", Method.POST);
                 req.AddParameter("questionIds", questionIds);
                 var res = rc.Execute(req);
                 if (res.StatusCode != HttpStatusCode.NoContent)
