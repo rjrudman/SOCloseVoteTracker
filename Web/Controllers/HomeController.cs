@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Web.Mvc;
+using Core;
 using Core.Workers;
 
 namespace Web.Controllers
@@ -21,8 +22,9 @@ namespace Web.Controllers
 
         public ActionResult Poll(IList<int> questionIds)
         {
+            Logger.LogInfo($"Polling questions: {string.Join(",", questionIds)}");
             foreach(var questionId in questionIds)
-                Pollers.QueueQuestionQuery(questionId);
+                Pollers.QueueQuestionQuery(questionId, null, true);
 
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
