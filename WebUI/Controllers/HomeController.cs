@@ -54,9 +54,7 @@ namespace WebUI.Controllers
                 var req = new RestRequest("Home/Poll", Method.POST);
                 foreach(var questionId in questionIds)
                     req.AddParameter("questionIds", questionId);
-                var res = rc.Execute(req);
-                if (res.StatusCode != HttpStatusCode.NoContent)
-                    Logger.LogInfo($"Failed to enqueue questions. Code: {res.StatusCode}");
+                rc.Execute(req);
             }).Start();
             
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
@@ -64,7 +62,6 @@ namespace WebUI.Controllers
         public ActionResult EnqueueAndRedirect(int questionId)
         {
             new Thread(() => EnqueueQuestionId(questionId)).Start();
-            Logger.LogInfo($"Question enqueued: {questionId}");
             return Redirect($"http://stackoverflow.com/q/{questionId}");
         }
 
@@ -79,11 +76,9 @@ namespace WebUI.Controllers
                         EnqueueQuestionId(questionId.Value);
                 }
             }).Start();
-            Logger.LogInfo($"Review enqueued: {reviewId}");
             return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
         }
-
-
+        
         public ActionResult PermaLink(SearchQuery query)
         {
             query.ImmediatelyQuery = true;
