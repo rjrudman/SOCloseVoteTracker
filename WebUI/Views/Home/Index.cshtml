@@ -387,7 +387,7 @@ ORDER BY COUNT(*) DESC</textarea>
         }
 
         showLoading();
-        $.post('/Home/EnqueueQuestionIds', { questionIds: ids }).always(function() {
+        $.post('/Home/RefreshQuestionIds', { questionIds: ids }).always(function() {
             hideLoading();
             $(refreshQuestionsLink).fadeOut();
         });

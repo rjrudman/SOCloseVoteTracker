@@ -8,6 +8,7 @@ using System.Threading;
 using System.Web;
 using System.Web.Mvc;
 using Core;
+using Core.Workers;
 using Dapper;
 using Data;
 using Data.Entities;
@@ -36,32 +37,17 @@ namespace WebUI.Controllers
             return View((SearchQuery)null);
         }
 
-        private void EnqueueQuestionId(int questionId)
-        {
-            var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
-            var req = new RestRequest("Home/PollQuestion", Method.GET);
-            req.AddParameter("questionId", questionId);
-            var res = rc.Execute(req);
-            if (res.StatusCode != HttpStatusCode.NoContent)
-                Logger.LogInfo($"Failed to enqueue question. Code: {res.StatusCode}");
-        }
 
-        public ActionResult EnqueueQuestionIds(List<int> questionIds)
+        public ActionResult RefreshQuestionIds(List<int> questionIds)
         {
-            new Thread(() =>
-            {
-                var rc = new RestClient("http://soclosevotetrackerworker.azurewebsites.net");
-                var req = new RestRequest("Home/Poll", Method.POST);
-                foreach(var questionId in questionIds)
-                    req.AddParameter("questionIds", questionId);
-                rc.Execute(req);
-            }).Start();
-            
+            foreach (var questionId in questionIds)
+                Pollers.QueueQuestionQuery(questionId, null, true);
+
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
         public ActionResult EnqueueAndRedirect(int questionId)
         {
-            new Thread(() => EnqueueQuestionId(questionId)).Start();
+            new Thread(() => Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true)).Start();
             return Redirect($"http://stackoverflow.com/q/{questionId}");
         }
 
@@ -73,7 +59,7 @@ namespace WebUI.Controllers
                 {
                     var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new { reviewId = reviewId }).FirstOrDefault();
                     if (questionId != null)
-                        EnqueueQuestionId(questionId.Value);
+                        Pollers.QueueQuestionQuery(questionId.Value, TimeSpan.FromMinutes(2), true);
                 }
             }).Start();
             return Redirect($"http://stackoverflow.com/review/close/{reviewId}");
