@@ -56,7 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataContext.cs" />
+    <Compile Include="ReadWriteDataContext.cs" />
     <Compile Include="Entities\CloseVote.cs" />
     <Compile Include="Entities\CVPlsRequest.cs" />
     <Compile Include="Entities\Log.cs" />

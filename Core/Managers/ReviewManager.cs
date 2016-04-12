@@ -10,7 +10,7 @@ namespace Core.Managers
         public static void GetRecentCloseVoteReviews()
         {
             var closeVoteReviews = QuestionScraper.GetRecentCloseVoteReviews();
-            using (var con = DataContext.PlainConnection())
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 using (var trans = con.BeginTransaction())
                 {

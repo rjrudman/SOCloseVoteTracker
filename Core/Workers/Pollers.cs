@@ -18,11 +18,11 @@ namespace Core.Workers
     {
         public static void StartPolling()
         {
-            Database.SetInitializer(new MigrateDatabaseToLatestVersion<DataContext, Configuration>());
-            using (var c = new DataContext())
+            Database.SetInitializer(new MigrateDatabaseToLatestVersion<ReadWriteDataContext, Configuration>());
+            using (var c = new ReadWriteDataContext())
                 c.Database.Initialize(true);
 
-            GlobalConfiguration.Configuration.UseSqlServerStorage(DataContext.CONNECTION_STRING_NAME, new SqlServerStorageOptions
+            GlobalConfiguration.Configuration.UseSqlServerStorage(ReadWriteDataContext.READ_WRITE_CONNECTION_STRING_NAME, new SqlServerStorageOptions
             {
                 JobExpirationCheckInterval = TimeSpan.FromMinutes(5)
             });
@@ -78,7 +78,7 @@ namespace Core.Workers
         public static void PollActiveQuestions(TimeSpan timeLastActive)
         {
             var timeActiveSeconds = timeLastActive.TotalSeconds;
-            using (var con = DataContext.PlainConnection())
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 var questionIds = con.Query<int>(@"SELECT Id FROM QUESTIONS WHERE (DATEDIFF(DAY, [LastTimeActive], GETUTCDATE()) + DATEDIFF(SECOND, [LastTimeActive], GETUTCDATE())) <= @timeActiveSeconds", new { timeActiveSeconds }).ToList();
                 foreach (var questionId in questionIds)
@@ -118,7 +118,7 @@ namespace Core.Workers
 
         public static void QueueQuestionQuery(int questionId, TimeSpan? after = null, bool forceEnqueue = false)
         {
-            using (var con = DataContext.PlainConnection())
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
                 QueueQuestionQuery(con, questionId, after, forceEnqueue);
         }
 

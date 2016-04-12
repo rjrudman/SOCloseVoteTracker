@@ -78,7 +78,7 @@ namespace Core.Managers
         {
             Pollers.QueueQuestionQuery(questionId);
 
-            using (var connection = DataContext.PlainConnection())
+            using (var connection = ReadWriteDataContext.ReadWritePlainConnection())
                 connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });
 
             //Check on the question again in an hour

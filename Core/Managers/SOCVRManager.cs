@@ -9,7 +9,7 @@ namespace Core
     {
         public static void CheckCVPls()
         {
-            using (var ctx = new DataContext())
+            using (var ctx = new ReadWriteDataContext())
             {
                 var weekAgo = DateTime.Now.ToUniversalTime().AddDays(-7);
                 var questionIdsToCheck =

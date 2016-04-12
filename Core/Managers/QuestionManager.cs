@@ -53,7 +53,7 @@ FROM q
 
         public static void QueryQuestion(int questionId, bool forceEnqueue)
         {
-            using (var con = DataContext.PlainConnection())
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 using (var trans = con.BeginTransaction())
                 {
@@ -84,7 +84,7 @@ FROM q
         {
             var numCloseVotesChanged = false;
             Question existingQuestion;
-            using (var context = new DataContext())
+            using (var context = new ReadWriteDataContext())
             {
                 var connection = context.Database.Connection;
                 connection.Open();
@@ -159,7 +159,7 @@ FROM q
                     )
                 {
                     //Now we mark it as new activity
-                    using (var con = DataContext.PlainConnection())
+                    using (var con = ReadWriteDataContext.ReadWritePlainConnection())
                     {
                         con.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id });
                     }

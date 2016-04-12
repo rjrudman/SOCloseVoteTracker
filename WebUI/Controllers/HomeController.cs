@@ -69,7 +69,7 @@ namespace WebUI.Controllers
         {
             new Thread(() =>
             {
-                using (var con = DataContext.PlainConnection())
+                using (var con = ReadWriteDataContext.ReadWritePlainConnection())
                 {
                     var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new { reviewId = reviewId }).FirstOrDefault();
                     if (questionId != null)
@@ -121,7 +121,7 @@ namespace WebUI.Controllers
         {
             try
             {
-                using (var con = DataContext.PlainConnection())
+                using (var con = ReadWriteDataContext.ReadOnlyPlainConnection())
                 {
                     var formattedResults = new List<Dictionary<string, object>>();
                     var results = con.Query(sql).ToList();
@@ -155,7 +155,7 @@ namespace WebUI.Controllers
             if (query == null)
                 return Json(new object[0]);
 
-            using (var context = new DataContext())
+            using (var context = new ReadWriteDataContext())
             {
                 IQueryable<Question> dataQuery = context.Questions;
                 IEnumerable<string> tags = query.TagSearch?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);

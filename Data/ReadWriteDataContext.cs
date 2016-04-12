@@ -6,23 +6,28 @@ using Data.Entities;
 
 namespace Data
 {
-    public class DataContext : DbContext
+    public class ReadWriteDataContext : DbContext
     {
-        public const string CONNECTION_STRING_NAME = "DBConnectionString";
+        public const string READ_WRITE_CONNECTION_STRING_NAME = "DBConnectionStringReadWrite";
+        public const string READ_ONLY_CONNECTION_STRING_NAME = "DBConnectionStringReadOnly";
 
-        /// <summary>
-        /// Get a plain connection to the database. Can be used with dapper. Uses the same connection string as EntityFramework
-        /// </summary>
-        /// <returns></returns>
-        public static IDbConnection PlainConnection()
+        public static IDbConnection ReadWritePlainConnection()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings[CONNECTION_STRING_NAME].ConnectionString;
+            var connectionString = ConfigurationManager.ConnectionStrings[READ_WRITE_CONNECTION_STRING_NAME].ConnectionString;
+            var connection = new SqlConnection(connectionString);
+            connection.Open();
+            return connection;
+        }
+        public static IDbConnection ReadOnlyPlainConnection()
+        {
+            var connectionString = ConfigurationManager.ConnectionStrings[READ_WRITE_CONNECTION_STRING_NAME].ConnectionString;
             var connection = new SqlConnection(connectionString);
             connection.Open();
             return connection;
         }
 
-        public DataContext() : base("DBConnectionString") { }
+        public ReadWriteDataContext() : base(READ_WRITE_CONNECTION_STRING_NAME) { }
+        public ReadWriteDataContext(string connectionString) : base(connectionString) { }
 
         public DbSet<Question> Questions { get; set; }
         public DbSet<Tag> Tags { get; set; }
@@ -56,4 +61,11 @@ namespace Data
             base.OnModelCreating(modelBuilder);
         }
     }
+
+
+    public class ReadOnlyDataContext : ReadWriteDataContext
+    {
+        public ReadOnlyDataContext() : base(READ_ONLY_CONNECTION_STRING_NAME) { }
+    }
+
 }

@@ -18,7 +18,7 @@ INSERT INTO Logs (DateLogged, Level, Message) VALUES (GETUTCDATE(), @Level, @Mes
                 Level = level,
                 Message = message
             };
-            using (var con = DataContext.PlainConnection())
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
                 con.Execute(INSERT_SQL, log);
         }
 
