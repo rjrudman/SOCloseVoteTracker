@@ -374,7 +374,7 @@ ORDER BY COUNT(*) DESC</textarea>
         var row = link.parent().parent();
         row.fadeOut();
 
-        $.post('/Home/HideQuestion', { questionId: questionId }, function(results) {});
+        $.post('/Home/HideQuestion', { questionId: questionId }, function() {});
     }
 
     function refreshCurrentQuestions(refreshQuestionsLink) {

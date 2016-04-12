@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Core.Sockets;
 using Newtonsoft.Json;
 using WebSocketSharp;
 
-namespace Core.Sockets
+namespace StackExchangeScraper.Sockets
 {
     public class ActiveQuestion
     {
@@ -30,7 +31,7 @@ namespace Core.Sockets
         public string ApiSiteParameter { get; set; }
     }
 
-    public class ActiveQuestionsPoller : BaseSESocket<ActiveQuestion>
+    public class ActiveQuestionsPoller : BaseStackExchangeSocket<ActiveQuestion>
     {
         public delegate void OnNewQuestionEventHandler(ActiveQuestion q);
         public delegate void OnExceptionEventHandler(Exception ex);

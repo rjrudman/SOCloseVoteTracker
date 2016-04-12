@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Threading;
-using Dapper;
-using Data;
+using Core.RestRequests;
 using RestSharp;
 
-namespace Core.RestRequests
+namespace StackExchangeScraper.RestRequests
 {
     public class RestRequestThrottler
     {
@@ -38,22 +37,14 @@ namespace Core.RestRequests
                     _specificThrottle.Run(() =>
                     {
                         response = Client.Execute(Request);
-                        LogRequest();
                     }, new CancellationToken());
                 else
                 {
                     response = Client.Execute(Request);
-                    LogRequest();
                 }
             }, new CancellationToken());
 
             return response;
-        }
-
-        private void LogRequest()
-        {
-            using (var con = DataContext.PlainConnection())
-                con.Execute("INSERT INTO WebRequests (DateExecuted) VALUES (GETUTCDATE())");
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Core.Models
+namespace StackExchangeScraper
 {
     public class QuestionModel
     {
@@ -21,5 +21,7 @@ namespace Core.Models
         
         public IList<string> Tags { get; set; }
         public IDictionary<int,int> CloseVotes { get; set; }
+
+        public IList<int> Dependencies = new List<int>(); 
     }
 }

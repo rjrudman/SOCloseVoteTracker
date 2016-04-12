@@ -5,30 +5,27 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using AngleSharp.Html;
-using Core.Models;
 using Core.RestRequests;
-using Core.Workers;
-using Data;
 using RestSharp;
+using StackExchangeScraper.RestRequests;
 using Utils;
 
-namespace Core
+namespace StackExchangeScraper
 {
-    public class StackOverflowConnecter
+    public static class QuestionScraper
     {
-        private const string API_URL = @"https://api.stackexchange.com/2.2";
         private const string SITE_URL = @"https://stackoverflow.com";
 
-        private readonly StackOverflowAuthenticator _authenticator = new StackOverflowAuthenticator(GlobalConfiguration.UserName, GlobalConfiguration.Password);
-        private readonly Regex _reviewIdRegex = new Regex("\\/review\\/close\\/(?<reviewID>\\d+)");
-        private readonly Regex _questionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
-        private readonly Regex _undeleteVoteCount = new Regex("^undelete \\((?<numVotes>\\d)\\)$");
-        private readonly Regex _deleteVoteCount = new Regex("^delete \\((?<numVotes>\\d)\\)$");
-        private readonly Regex _migratedIdRegex = new Regex("\\/stackoverflow.com\\/posts\\/(?<questionId>\\d+)/revisions");
+        private static readonly StackOverflowAuthenticator Authenticator = new StackOverflowAuthenticator(GlobalConfiguration.UserName, GlobalConfiguration.Password);
+        private static readonly Regex ReviewIdRegex = new Regex("\\/review\\/close\\/(?<reviewID>\\d+)");
+        private static readonly Regex QuestionIdRegex = new Regex("\\/questions\\/(?<questionID>\\d+)(\\/.*|$)");
+        private static readonly Regex UndeleteVoteCount = new Regex("^undelete \\((?<numVotes>\\d)\\)$");
+        private static readonly Regex DeleteVoteCount = new Regex("^delete \\((?<numVotes>\\d)\\)$");
+        private static readonly Regex MigratedIdRegex = new Regex("\\/stackoverflow.com\\/posts\\/(?<questionId>\\d+)/revisions");
 
-        private IList<int> GetCloseVoteQueue(string mode)
+        private static IList<int> GetCloseVoteQueue(string mode)
         {
-            var throttler = new RestRequestThrottler(SITE_URL, "tools", Method.GET, _authenticator);
+            var throttler = new RestRequestThrottler(SITE_URL, "tools", Method.GET, Authenticator);
 
             throttler.Request.AddHeader("X-Requested-With", "XMLHttpRequest");
 
@@ -47,16 +44,16 @@ namespace Core
                 var link = r.QuerySelector("td a");
                 var url = link.GetAttribute("href");
 
-                var match = _questionIdRegex.Match(url);
+                var match = QuestionIdRegex.Match(url);
                 var id = int.Parse(match.Groups["questionID"].Value);
 
                 return id;
             }).ToList();
         }
 
-        public Dictionary<int, int> GetRecentCloseVoteReviews()
+        public static Dictionary<int, int> GetRecentCloseVoteReviews()
         {
-            var throttler = new RestRequestThrottler(SITE_URL, "review/close/history", Method.GET, _authenticator);
+            var throttler = new RestRequestThrottler(SITE_URL, "review/close/history", Method.GET, Authenticator);
 
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
@@ -71,8 +68,8 @@ namespace Core
                 var questionLinkHref = questionLinkElement.GetAttribute("href");
                 var reviewLinkHref = reviewLinkElement.GetAttribute("href");
 
-                var questionMatch = _questionIdRegex.Match(questionLinkHref);
-                var reviewMatch = _reviewIdRegex.Match(reviewLinkHref);
+                var questionMatch = QuestionIdRegex.Match(questionLinkHref);
+                var reviewMatch = ReviewIdRegex.Match(reviewLinkHref);
                 if (questionMatch.Success && reviewMatch.Success)
                 {
                     var questionId = int.Parse(questionMatch.Groups["questionID"].Value);
@@ -84,24 +81,28 @@ namespace Core
             return dict;
         }
 
-        public IList<int> GetRecentlyClosed()
+        public static IList<int> GetRecentlyClosed()
         {
             return GetCloseVoteQueue("recentlyClosed");
         }
 
-        public IList<int> GetMostVotedCloseVotesQuestionIds()
+        public static IList<int> GetMostVotedCloseVotesQuestionIds()
         {
             return GetCloseVoteQueue("topClose");
         }
 
-        public IList<int> GetRecentCloseVoteQuestionIds()
+        public static IList<int> GetRecentCloseVoteQuestionIds()
         {
             return GetCloseVoteQueue("recentClose");
         }
 
-        public QuestionModel GetQuestionInformation(int questionId)
+        public static QuestionModel GetQuestionInformation(int questionId)
         {
-            var throttler = new RestRequestThrottler(SITE_URL, $"questions/{questionId}", Method.GET, _authenticator);
+            return GetQuestionInformation(questionId, 0);
+        }
+        public static QuestionModel GetQuestionInformation(int questionId, int existingVoteCount)
+        {
+            var throttler = new RestRequestThrottler(SITE_URL, $"questions/{questionId}", Method.GET, Authenticator);
             var response = throttler.Execute();
             var parser = new HtmlParser(response.Content);
             if (response.StatusCode != HttpStatusCode.OK)
@@ -111,13 +112,13 @@ namespace Core
 
             if (response.ResponseUri.DnsSafeHost != "stackoverflow.com")
                 return GetMigrationQuestionInfo(questionId, parser);
-            
+
             var idElement = parser.Result.QuerySelector("meta[property='og:url']");
             if (idElement != null)
             {
                 var url = idElement.GetAttribute("content");
 
-                var match = _questionIdRegex.Match(url);
+                var match = QuestionIdRegex.Match(url);
                 var id = int.Parse(match.Groups["questionID"].Value);
                 if (id != questionId)
                     throw new Exception($"Question ID returned the wrong question: I queried {questionId} but got {id}. URL: {response.ResponseUri}");
@@ -141,7 +142,7 @@ namespace Core
             if (deleteVotesElement != null)
             {
                 var content = deleteVotesElement.TextContent;
-                var match = _deleteVoteCount.Match(content);
+                var match = DeleteVoteCount.Match(content);
                 if (match.Success)
                     deleteVotes = int.Parse(match.Groups["numVotes"].Value);
             }
@@ -151,7 +152,7 @@ namespace Core
             if (undeleteVotesElement != null)
             {
                 var content = undeleteVotesElement.TextContent;
-                var match = _undeleteVoteCount.Match(content);
+                var match = UndeleteVoteCount.Match(content);
                 if (match.Success)
                     undeleteVotes = int.Parse(match.Groups["numVotes"].Value);
             }
@@ -160,16 +161,18 @@ namespace Core
             var asked = DateTime.ParseExact(askedStr, "yyyy-MM-dd HH:mm:ssZ", CultureInfo.InvariantCulture).ToUniversalTime();
 
             int? dupeParent = null;
+            var dependencies = new List<int>();
             var possibleDupeTargetLink = parser.Result.QuerySelector(".question-originals-of-duplicate a");
             if (possibleDupeTargetLink != null)
             {
                 var url = possibleDupeTargetLink.GetAttribute("href");
 
-                var match = _questionIdRegex.Match(url);
+                var match = QuestionIdRegex.Match(url);
                 dupeParent = int.Parse(match.Groups["questionID"].Value);
-                Pollers.QueryQuestion(dupeParent.Value, false);
+
+                dependencies.Add(dupeParent.Value);
             }
-            
+
             var numCloseVotes = 0;
             var numCloseVotesElement = parser.Result.QuerySelector(".close-question-link[data-isclosed='false'] .existing-flag-count");
             if (!string.IsNullOrWhiteSpace(numCloseVotesElement?.TextContent))
@@ -183,16 +186,11 @@ namespace Core
             var votes = new Dictionary<int, int>();
             if (!isClosed && numCloseVotes != 0)
             {
-                using (var context = new DataContext())
-                {
-                    var question = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                    if (question == null || question.CloseVotes.Count != numCloseVotes)
-                        votes = GetCloseVotes(questionId);
-                    else
-                        votes = null;
-                }
+                votes = existingVoteCount != numCloseVotes
+                    ? GetCloseVotes(questionId) 
+                    : null;
             }
-            
+
             return new QuestionModel
             {
                 Closed = isClosed,
@@ -205,21 +203,22 @@ namespace Core
                 Title = title,
                 Id = questionId,
                 Tags = tags.ToList(),
-                CloseVotes = votes
+                CloseVotes = votes,
+                Dependencies = dependencies
             };
         }
 
-        private QuestionModel GetMigrationQuestionInfo(int questionId, HtmlParser parser)
+        private static QuestionModel GetMigrationQuestionInfo(int questionId, HtmlParser parser)
         {
             var migrationElement = parser.Result.QuerySelector(".question-status b:contains('migrated')");
             if (migrationElement == null)
                 return null;
             var migratedFromElement = migrationElement.ParentElement.QuerySelector("a");
 
-            var match = _migratedIdRegex.Match(migratedFromElement.GetAttribute("href"));
+            var match = MigratedIdRegex.Match(migratedFromElement.GetAttribute("href"));
             if (!match.Success)
                 return null;
-            
+
             if (int.Parse(match.Groups["questionId"].Value) != questionId)
                 return null;
 
@@ -246,10 +245,10 @@ namespace Core
 
         //One request every 3.5 seconds.
         private static readonly TimeSpanSemaphore CloseVotePopupThrottle = new TimeSpanSemaphore(1, TimeSpan.FromSeconds(3.5));
-        private Dictionary<int, int> GetCloseVotes(int questionId)
+        private static Dictionary<int, int> GetCloseVotes(int questionId)
         {
-            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, _authenticator, CloseVotePopupThrottle);
-            
+            var throttler = new RestRequestThrottler(SITE_URL, $"flags/questions/{questionId}/close/popup", Method.GET, Authenticator, CloseVotePopupThrottle);
+
             var response = throttler.Execute();
             if (response.StatusCode != HttpStatusCode.OK) //We're throttled to 3 seconds. Exceeding this throttle returns a 409 response. Throwing an exception will put it into the retry queue.
                 throw new Exception("Failed to load close dialog. Status: " + response.StatusCode);
@@ -299,7 +298,7 @@ namespace Core
                 if (!votes.ContainsKey(closeVoteTypeId))
                     votes[closeVoteTypeId] = 0;
 
-                votes[closeVoteTypeId]+= int.Parse(closeVoteTag.TextContent);
+                votes[closeVoteTypeId] += int.Parse(closeVoteTag.TextContent);
             }
 
             return votes;

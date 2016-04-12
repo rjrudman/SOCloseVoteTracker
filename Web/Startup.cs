@@ -19,7 +19,7 @@ namespace Web
         {
             ConfigureAuth(app);
             
-            Pollers.Start();
+            Pollers.StartPolling();
 
             app.UseErrorPage();
             app.UseHangfireServer();

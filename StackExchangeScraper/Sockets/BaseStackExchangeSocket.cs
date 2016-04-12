@@ -3,34 +3,34 @@ using Newtonsoft.Json;
 using Utils;
 using WebSocketSharp;
 
-namespace Core.Sockets
+namespace StackExchangeScraper.Sockets
 {
-    public abstract class BaseSESocket<TMessageType>
+    public abstract class BaseStackExchangeSocket<TMessageType>
         where TMessageType : class
     {
-        protected const string SESocketsUrl = "ws://qa.sockets.stackexchange.com";
+        protected const string StackExchangeSocketsUrl = "ws://qa.sockets.stackexchange.com";
 
-        private WebSocket socket;
-        private bool disposed;
+        private WebSocket _socket;
+        private bool _disposed;
 
-        public WebSocketState SocketState => socket?.ReadyState ?? WebSocketState.Closed;
+        public WebSocketState SocketState => _socket?.ReadyState ?? WebSocketState.Closed;
 
-        protected BaseSESocket()
+        protected BaseStackExchangeSocket()
         {
             InitialiseSocket();
         }
 
         private void InitialiseSocket()
         {
-            socket = new WebSocket(SESocketsUrl);
+            _socket = new WebSocket(StackExchangeSocketsUrl);
             if (!string.IsNullOrWhiteSpace(GlobalConfiguration.ProxyUrl))
-                socket.SetProxy(GlobalConfiguration.ProxyUrl, GlobalConfiguration.ProxyUsername, GlobalConfiguration.ProxyPassword);
+                _socket.SetProxy(GlobalConfiguration.ProxyUrl, GlobalConfiguration.ProxyUsername, GlobalConfiguration.ProxyPassword);
 
-            socket.OnOpen += (o, oo) =>
-                socket.Send(ActionRequest);
+            _socket.OnOpen += (o, oo) =>
+                _socket.Send(ActionRequest);
 
-            socket.OnError += HandleException;
-            socket.OnMessage += (obj, args) =>
+            _socket.OnError += HandleException;
+            _socket.OnMessage += (obj, args) =>
             {
                 new Thread(() =>
                 {
@@ -40,9 +40,9 @@ namespace Core.Sockets
                 }).Start();
             };
 
-            socket.OnClose += (o, oo) =>
+            _socket.OnClose += (o, oo) =>
             {
-                if (disposed)
+                if (_disposed)
                     return;
 
                 InitialiseSocket();
@@ -52,32 +52,35 @@ namespace Core.Sockets
 
         public void Dispose()
         {
-            disposed = true;
+            _disposed = true;
             Close();
         }
 
         public void Connect()
         {
             if (SocketState == WebSocketState.Connecting || SocketState == WebSocketState.Closed)
-                socket?.Connect();
+                _socket?.Connect();
         }
 
         public void Close()
         {
             if (SocketState == WebSocketState.Open)
-                socket?.Close();
+                _socket?.Close();
         }
 
         protected virtual void HandleException(object obj, ErrorEventArgs args)
         {
         }
 
+        // ReSharper disable once ClassNeverInstantiated.Local
         private class ResponseObjectWrapper
         {
             [JsonProperty("action")]
+            // ReSharper disable once UnusedMember.Local
             public string Action { get; set; }
 
             [JsonProperty("data")]
+            // ReSharper disable once UnusedAutoPropertyAccessor.Local
             public string Data { get; set; }
         }
 

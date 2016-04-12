@@ -3,61 +3,20 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
 using System.Linq;
-using Core.Models;
-using Core.Sockets;
+using Core.Managers;
 using Dapper;
 using Data;
-using Data.Entities;
 using Data.Migrations;
 using Hangfire;
 using Hangfire.SqlServer;
+using StackExchangeScraper;
+using StackExchangeScraper.Sockets;
 
 namespace Core.Workers
 {
     public static class Pollers
     {
-        const string UPSERT_QUESTION_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @Id)
-BEGIN
-    INSERT INTO Questions(Id, Closed, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, DuplicateParentId, Asked, Title, LastUpdated, LastTimeActive) VALUES (@Id, @Closed, @Deleted, @DeleteVotes, @UndeleteVotes, @ReopenVotes, @DuplicateParentId, @Asked, @Title, GETUTCDATE(), GETUTCDATE())
-END
-ELSE
-BEGIN
-    UPDATE Questions
-    SET Closed = @Closed, Deleted = @Deleted, DeleteVotes = @DeleteVotes, UndeleteVotes = @UndeleteVotes, ReopenVotes = @ReopenVotes, DuplicateParentId = @DuplicateParentId, Asked = @Asked, Title = @Title, LastUpdated = GETUTCDATE()
-    WHERE Id = @Id
-END
-";
-        const string UPSERT_TAG_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM Tags with (XLOCK, ROWLOCK) WHERE TagName = @tagName)
-BEGIN
-    INSERT INTO Tags(TagName) VALUES (@tagName)
-END
-";
-        const string UPSERT_QUESTION_TAG_SQL = @"
-IF NOT EXISTS (SELECT NULL FROM QuestionTags with (XLOCK, ROWLOCK) WHERE QuestionID = @questionID AND TagName = @tagName)
-BEGIN
-    INSERT INTO QuestionTags(QuestionID, TagName) VALUES (@questionID, @tagName)
-END
-";
-
-        const string INSERT_QUESTION_VOTE_SQL = @"
-INSERT INTO CloseVotes(QuestionId, VoteTypeId, FirstTimeSeen) VALUES (@questionId, @voteTypeId, GETUTCDATE())
-";
-
-        const string DELETE_NEWEST_VOTE_SQL = @"
-WITH q AS
-(
-	SELECT TOP 1 *
-	FROM CloseVotes
-	WHERE QuestionId = @questionId AND VoteTypeId = @voteTypeId
-	ORDER BY FirstTimeSeen DESC
-)
-DELETE
-FROM q
-";
-
-        public static void Start()
+        public static void StartPolling()
         {
             Database.SetInitializer(new MigrateDatabaseToLatestVersion<DataContext, Configuration>());
             using (var c = new DataContext())
@@ -72,11 +31,11 @@ FROM q
             {
                 //Every 5 minutes
                 RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
-                RecurringJob.AddOrUpdate(() => QueryRecentCloseVotes(), "*/5 * * * *");
-                RecurringJob.AddOrUpdate(() => QueryMostCloseVotes(), "*/5 * * * *");
-                RecurringJob.AddOrUpdate(() => GetRecentCloseVoteReviews(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => PollRecentCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => PollMostCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => ReviewManager.GetRecentCloseVoteReviews(), "*/5 * * * *");
                 //Every hour
-                RecurringJob.AddOrUpdate(() => CheckCVPls(), "0 * * * *");
+                RecurringJob.AddOrUpdate(() => SOCVRManager.CheckCVPls(), "0 * * * *");
 
                 //Query this every 15 minutes (except on the hour)
                 RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "15,30,45 * * * *");
@@ -90,57 +49,12 @@ FROM q
                 //Every day
                 RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
 
-                Chat.JoinAndWatchRoom(Utils.GlobalConfiguration.ChatRoomID);
+                ChatroomManager.JoinAndWatchSOCVR();
 
                 PollFrontPage();
             }
         }
-
-        public static void CheckCVPls()
-        {
-            using (var ctx = new DataContext())
-            {
-                var weekAgo = DateTime.Now.ToUniversalTime().AddDays(-7);
-                var questionIdsToCheck =
-                    ctx.CVPlsRequests
-                        .Where(r => !r.Question.Closed && r.CreatedAt >= weekAgo)
-                        .Select(r => r.QuestionId)
-                        .ToList();
-
-                foreach (var questionId in questionIdsToCheck)
-                    QueueQuestionQuery(questionId);
-            }
-        }
-
-        public static void GetRecentCloseVoteReviews()
-        {
-            var matches = new StackOverflowConnecter().GetRecentCloseVoteReviews();
-            using (var con = DataContext.PlainConnection())
-            {
-                using (var trans = con.BeginTransaction())
-                {
-                    foreach (var match in matches)
-                    {
-                        //If the question doesn't exist, insert a blank row (we will queue it for scraping later)
-                        con.Execute(@"
-IF NOT EXISTS (SELECT NULL FROM Questions with (XLOCK, ROWLOCK) WHERE Id = @questionId)
-BEGIN
-    INSERT INTO Questions(Id, Closed, LastUpdated, Deleted, DeleteVotes, UndeleteVotes, ReopenVotes, LastTimeActive, ReviewId) 
-        VALUES (@questionId, 0, GETUTCDATE(), 0, 0, 0, 0, GETUTCDATE(), @reviewId)
-END
-ELSE
-BEGIN
-    UPDATE Questions SET ReviewId = @reviewId WHERE Id = @questionId
-END
-", new { questionId = match.Key, reviewId = match.Value }, trans);
-                    }
-
-                    trans.Commit();
-                }
-            }
-            QueueQuestionQueries(matches.Keys);
-        }
-
+        
         public static void PollActiveQuestionsFifteenMins()
         {
             PollActiveQuestions(TimeSpan.FromMinutes(15));
@@ -183,20 +97,20 @@ END
 
         public static void RecentlyClosed()
         {
-            QueueQuestionQueries(new StackOverflowConnecter().GetRecentlyClosed());
+            QueueQuestionQueries(QuestionScraper.GetRecentlyClosed());
         }
 
-        public static void QueryMostCloseVotes()
+        public static void PollMostCloseVotes()
         {
-            QueueQuestionQueries(new StackOverflowConnecter().GetMostVotedCloseVotesQuestionIds());
+            QueueQuestionQueries(QuestionScraper.GetMostVotedCloseVotesQuestionIds());
         }
 
-        public static void QueryRecentCloseVotes()
+        public static void PollRecentCloseVotes()
         {
-            QueueQuestionQueries(new StackOverflowConnecter().GetRecentCloseVoteQuestionIds());
+            QueueQuestionQueries(QuestionScraper.GetRecentCloseVoteQuestionIds());
         }
 
-        private static void QueueQuestionQueries(IEnumerable<int> questionIds)
+        public static void QueueQuestionQueries(IEnumerable<int> questionIds)
         {
             foreach(var questionId in questionIds)
                 QueueQuestionQuery(questionId);
@@ -220,128 +134,14 @@ END
                 if (nextQueueTime != null && nextQueueTime.Value > DateTime.UtcNow && nextQueueTime.Value < newQueueTime)
                     return;
 
-                con.Execute("INSERT INTO QueuedQuestionQueries(QuestionId, ProcessTime) VALUES (@id, @newQueueTime)", new {newQueueTime = newQueueTime, id = questionId}, trans);
+                con.Execute("INSERT INTO QueuedQuestionQueries(QuestionId, ProcessTime) VALUES (@id, @newQueueTime)", new {newQueueTime, id = questionId}, trans);
                 trans.Commit();
 
                 if (after == null)
-                    BackgroundJob.Enqueue(() => QueryQuestion(questionId, forceEnqueue));
+                    BackgroundJob.Enqueue(() => QuestionManager.QueryQuestion(questionId, forceEnqueue));
                 else
-                    BackgroundJob.Schedule(() => QueryQuestion(questionId, forceEnqueue), after.Value);
+                    BackgroundJob.Schedule(() => QuestionManager.QueryQuestion(questionId, forceEnqueue), after.Value);
             }
-        }
-
-        public static void QueryQuestion(int questionId, bool forceEnqueue)
-        {
-            var connecter = new StackOverflowConnecter();
-            using (var con = DataContext.PlainConnection())
-            {
-                using (var trans = con.BeginTransaction())
-                {
-                    con.Execute("DELETE FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id AND ProcessTime <= @processTime", new { id = questionId, processTime = DateTime.Now }, trans);
-                    trans.Commit();
-                }
-
-                if (!forceEnqueue)
-                {
-                    var fiveMinutesAgo = DateTime.Now.AddMinutes(-5);
-                    var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions WHERE Id = @id", new {id = questionId}).FirstOrDefault();
-                    if (lastUpdated != null && lastUpdated.Value >= fiveMinutesAgo)
-                        return;
-                }
-            }
-
-            var question = connecter.GetQuestionInformation(questionId);
-            if (question != null)
-                UpsertQuestionInformation(question);
-        }
-
-        private static void UpsertQuestionInformation(QuestionModel question)
-        {
-            var numCloseVotesChanged = false;
-            Question existingQuestion;
-            using (var context = new DataContext())
-            {
-                var connection = context.Database.Connection;
-                connection.Open();
-
-                using (var trans = connection.BeginTransaction())
-                {
-                    context.Database.UseTransaction(trans);
-
-                    existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
-                    var existingVotes = existingQuestion?.CloseVotes
-                        .GroupBy(ev => ev.VoteTypeId)
-                        .ToDictionary(g => g.Key, g => g.Count()) ?? new Dictionary<int, int>();
-                    
-                    connection.Execute(UPSERT_QUESTION_SQL, question, trans);
-                    foreach (var tag in question.Tags)
-                    {
-                        //Todo: Delete old/removed tags? If so, hard or soft delete?
-                        connection.Execute(UPSERT_TAG_SQL, new { tagName = tag }, trans);
-                        connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
-                    }
-
-                    if (question.CloseVotes != null)
-                    {
-                        foreach (var voteGroup in question.CloseVotes)
-                        {
-                            int numToInsert;
-                            if (existingVotes.ContainsKey(voteGroup.Key))
-                                numToInsert = voteGroup.Value - existingVotes[voteGroup.Key];
-                            else
-                                numToInsert = voteGroup.Value;
-                            
-                            for (var i = 0; i < numToInsert; i++)
-                            {
-                                connection.Execute(INSERT_QUESTION_VOTE_SQL, new {questionId = question.Id, voteTypeId = voteGroup.Key}, trans);
-                                numCloseVotesChanged = true;
-                            }
-                        }
-                        foreach (var existingVote in existingVotes)
-                        {
-                            int numToDelete;
-                            if (question.CloseVotes.ContainsKey(existingVote.Key))
-                                numToDelete = existingVote.Value - question.CloseVotes[existingVote.Key];
-                            else
-                                numToDelete = existingVote.Value;
-
-                            //Delete newest vote of that type
-                            for (var i = 0; i < numToDelete; i++)
-                            {
-                                connection.Execute(DELETE_NEWEST_VOTE_SQL, new { questionId = question.Id, voteTypeId = existingVote.Key }, trans);
-                                numCloseVotesChanged = true;
-                            }
-                        }
-                    }
-
-                    trans.Commit();
-                }
-            }
-            
-            //We mark it as active when:
-            //Delete status changed
-            //Closed status changed
-            //Different amount of (un)Delete votes
-            //Different amount of reopen/close votes
-            if (existingQuestion != null)
-            {
-                if (
-                    (existingQuestion.Deleted != question.Deleted)
-                    || (existingQuestion.Closed != question.Closed)
-                    || (existingQuestion.DeleteVotes != question.DeleteVotes)
-                    || (existingQuestion.UndeleteVotes != question.UndeleteVotes)
-                    || (numCloseVotesChanged)
-                    || (existingQuestion.ReopenVotes != question.ReopenVotes)
-                    )
-                {
-                    //Now we mark it as new activity
-                    using (var con = DataContext.PlainConnection())
-                    {
-                        con.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id });
-                    }
-                }
-            }
-            
         }
     }
 }
