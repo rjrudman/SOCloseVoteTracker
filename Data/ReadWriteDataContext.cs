@@ -20,7 +20,7 @@ namespace Data
         }
         public static IDbConnection ReadOnlyPlainConnection()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings[READ_WRITE_CONNECTION_STRING_NAME].ConnectionString;
+            var connectionString = ConfigurationManager.ConnectionStrings[READ_ONLY_CONNECTION_STRING_NAME].ConnectionString;
             var connection = new SqlConnection(connectionString);
             connection.Open();
             return connection;
