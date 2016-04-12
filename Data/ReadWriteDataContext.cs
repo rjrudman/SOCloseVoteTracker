@@ -8,8 +8,8 @@ namespace Data
 {
     public class ReadWriteDataContext : DbContext
     {
-        public const string READ_WRITE_CONNECTION_STRING_NAME = "DBConnectionStringReadWrite";
-        public const string READ_ONLY_CONNECTION_STRING_NAME = "DBConnectionStringReadOnly";
+        public const string READ_WRITE_CONNECTION_STRING_NAME = "ReadWriteConnection";
+        public const string READ_ONLY_CONNECTION_STRING_NAME = "ReadOnlyConnection";
 
         public static IDbConnection ReadWritePlainConnection()
         {
