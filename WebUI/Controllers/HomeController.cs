@@ -36,7 +36,20 @@ namespace WebUI.Controllers
         {
             return View((SearchQuery)null);
         }
-
+        
+        public ActionResult ManualRefreshQuestions(string questionIds)
+        {
+            var questionIdInts = questionIds.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries)
+                .Select(i =>
+                {
+                    int outVal;
+                    if (int.TryParse(i, out outVal))
+                        return (int?) outVal;
+                    return null;
+                }).Where(i => i.HasValue).Select(i => i.Value).ToList();
+            RefreshQuestionIds(questionIdInts);
+            return RedirectToAction("Index");
+        }
 
         public ActionResult RefreshQuestionIds(List<int> questionIds)
         {
