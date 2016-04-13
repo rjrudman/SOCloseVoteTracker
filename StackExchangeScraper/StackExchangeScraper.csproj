@@ -65,6 +65,7 @@
     <Compile Include="Sockets\ActiveQuestionSocket.cs" />
     <Compile Include="Sockets\BaseStackExchangeSocket.cs" />
     <Compile Include="Sockets\ExchangeSite.cs" />
+    <Compile Include="StackExchangeAPI.cs" />
     <Compile Include="StackOverflowAuthenticator.cs" />
   </ItemGroup>
   <ItemGroup>
