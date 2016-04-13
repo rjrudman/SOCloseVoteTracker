@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using Core.Workers;
 using Dapper;
 using Data;
-using Hangfire;
 using Newtonsoft.Json.Linq;
 using StackExchangeScraper;
 

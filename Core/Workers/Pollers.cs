@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 using Core.Managers;
 using Dapper;
 using Data;
-using Data.Migrations;
-using Hangfire;
-using Hangfire.SqlServer;
 using StackExchangeScraper;
 using StackExchangeScraper.Sockets;
 
@@ -22,24 +18,24 @@ namespace Core.Workers
             if (!Utils.GlobalConfiguration.DisablePolling)
             {
                 //Every 5 minutes
-                RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
-                RecurringJob.AddOrUpdate(() => PollRecentCloseVotes(), "*/5 * * * *");
-                RecurringJob.AddOrUpdate(() => PollMostCloseVotes(), "*/5 * * * *");
-                RecurringJob.AddOrUpdate(() => ReviewManager.GetRecentCloseVoteReviews(), "*/5 * * * *");
-                //Every hour
-                RecurringJob.AddOrUpdate(() => SOCVRManager.CheckCVPls(), "0 * * * *");
+                //RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
+                //RecurringJob.AddOrUpdate(() => PollRecentCloseVotes(), "*/5 * * * *");
+                //RecurringJob.AddOrUpdate(() => PollMostCloseVotes(), "*/5 * * * *");
+                //RecurringJob.AddOrUpdate(() => ReviewManager.GetRecentCloseVoteReviews(), "*/5 * * * *");
+                ////Every hour
+                //RecurringJob.AddOrUpdate(() => SOCVRManager.CheckCVPls(), "0 * * * *");
 
-                //Query this every 15 minutes (except on the hour)
-                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "15,30,45 * * * *");
+                ////Query this every 15 minutes (except on the hour)
+                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "15,30,45 * * * *");
 
-                //Query this every hour (except every four hours)
-                RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23 * * *");
+                ////Query this every hour (except every four hours)
+                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23 * * *");
 
-                //Every 4 hours (except at midnight)
-                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFourHours(), "0 4,8,12,16,20 * * *");
+                ////Every 4 hours (except at midnight)
+                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsFourHours(), "0 4,8,12,16,20 * * *");
 
-                //Every day
-                RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
+                ////Every day
+                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
 
                 ChatroomManager.JoinAndWatchSOCVR();
 
@@ -138,14 +134,14 @@ namespace Core.Workers
 
         public static void ScheduleTask(Expression<Action> expr, TimeSpan after)
         {
-            if (Utils.GlobalConfiguration.EnableHangfire)
-                BackgroundJob.Schedule(expr, after);
+            //if (Utils.GlobalConfiguration.EnableHangfire)
+            //    BackgroundJob.Schedule(expr, after);
         }
 
         public static void EnqueueTask(Expression<Action> expr)
         {
-            if (Utils.GlobalConfiguration.EnableHangfire)
-                BackgroundJob.Enqueue(expr);
+            //if (Utils.GlobalConfiguration.EnableHangfire)
+            //    BackgroundJob.Enqueue(expr);
         }
     }
 }

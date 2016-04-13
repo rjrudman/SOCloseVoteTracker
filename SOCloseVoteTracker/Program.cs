@@ -1,8 +1,4 @@
-﻿using System.Threading;
-using Core;
-using Core.Workers;
-using Hangfire;
-
+﻿
 namespace SOCloseVoteTracker
 {
     class Program
