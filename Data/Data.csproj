@@ -56,6 +56,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Migrations\201604130012232_ClearOldHangfireJobs.cs" />
+    <Compile Include="Migrations\201604130012232_ClearOldHangfireJobs.Designer.cs">
+      <DependentUpon>201604130012232_ClearOldHangfireJobs.cs</DependentUpon>
+    </Compile>
     <Compile Include="ReadWriteDataContext.cs" />
     <Compile Include="Entities\CloseVote.cs" />
     <Compile Include="Entities\CVPlsRequest.cs" />
@@ -234,6 +238,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604080331325_StartLogging.resx">
       <DependentUpon>201604080331325_StartLogging.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604130012232_ClearOldHangfireJobs.resx">
+      <DependentUpon>201604130012232_ClearOldHangfireJobs.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

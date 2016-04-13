@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
 using System.Linq;
+using System.Linq.Expressions;
 using Core.Managers;
 using Dapper;
 using Data;
@@ -18,15 +19,6 @@ namespace Core.Workers
     {
         public static void StartPolling()
         {
-            Database.SetInitializer(new MigrateDatabaseToLatestVersion<ReadWriteDataContext, Configuration>());
-            using (var c = new ReadWriteDataContext())
-                c.Database.Initialize(true);
-
-            GlobalConfiguration.Configuration.UseSqlServerStorage(ReadWriteDataContext.READ_WRITE_CONNECTION_STRING_NAME, new SqlServerStorageOptions
-            {
-                JobExpirationCheckInterval = TimeSpan.FromMinutes(5)
-            });
-            
             if (!Utils.GlobalConfiguration.DisablePolling)
             {
                 //Every 5 minutes
@@ -138,10 +130,22 @@ namespace Core.Workers
                 trans.Commit();
 
                 if (after == null)
-                    BackgroundJob.Enqueue(() => QuestionManager.QueryQuestion(questionId, forceEnqueue));
+                    EnqueueTask(() => QuestionManager.QueryQuestion(questionId, forceEnqueue));
                 else
-                    BackgroundJob.Schedule(() => QuestionManager.QueryQuestion(questionId, forceEnqueue), after.Value);
+                    ScheduleTask(() => QuestionManager.QueryQuestion(questionId, forceEnqueue), after.Value);
             }
+        }
+
+        public static void ScheduleTask(Expression<Action> expr, TimeSpan after)
+        {
+            if (Utils.GlobalConfiguration.EnableHangfire)
+                BackgroundJob.Schedule(expr, after);
+        }
+
+        public static void EnqueueTask(Expression<Action> expr)
+        {
+            if (Utils.GlobalConfiguration.EnableHangfire)
+                BackgroundJob.Enqueue(expr);
         }
     }
 }

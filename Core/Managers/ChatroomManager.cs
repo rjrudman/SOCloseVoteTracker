@@ -70,7 +70,7 @@ namespace Core.Managers
                 int questionId;
 
                 if (int.TryParse(questionIDstr, out questionId))
-                    BackgroundJob.Enqueue(() => QueryQuestionAndLogRequest(userId, questionId, content));
+                    Pollers.EnqueueTask(() => QueryQuestionAndLogRequest(userId, questionId, content));
             }
         }
         

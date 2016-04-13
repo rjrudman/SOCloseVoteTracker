@@ -254,6 +254,10 @@
       <Project>{7DD019C3-42A1-4F45-B2E4-1EE18BCD7CAF}</Project>
       <Name>Data</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.csproj">
+      <Project>{1b18cbb6-fb29-4f96-b9f5-e870a9983c67}</Project>
+      <Name>Utils</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

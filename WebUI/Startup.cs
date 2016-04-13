@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Web;
 using Core.Workers;
+using Data;
+using Data.Migrations;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.Dashboard;
+using Hangfire.SqlServer;
 using Hangfire.States;
 using Hangfire.Storage;
 using Microsoft.Owin;
@@ -17,17 +21,30 @@ namespace WebUI
     {
         public void Configuration(IAppBuilder app)
         {
-            Pollers.StartPolling();
+            Database.SetInitializer(new MigrateDatabaseToLatestVersion<ReadWriteDataContext, Configuration>());
+            using (var c = new ReadWriteDataContext())
+                c.Database.Initialize(true);
 
-            app.UseHangfireServer();
-
-            var options = new DashboardOptions
+            GlobalConfiguration.Configuration.UseSqlServerStorage(ReadWriteDataContext.READ_WRITE_CONNECTION_STRING_NAME, new SqlServerStorageOptions
             {
-                AppPath = VirtualPathUtility.ToAbsolute("~"),
-                AuthorizationFilters = new[] { new RemoveAuthorizationFilter() }
-            };
-            app.UseHangfireDashboard("/hangfire", options);
-            GlobalJobFilters.Filters.Add(new ImmediatelyExpireSuccessfulJobs());
+                JobExpirationCheckInterval = TimeSpan.FromMinutes(5)
+            });
+
+
+            if (Utils.GlobalConfiguration.EnableHangfire)
+            {
+                Pollers.StartPolling();
+
+                app.UseHangfireServer();
+
+                var options = new DashboardOptions
+                {
+                    AppPath = VirtualPathUtility.ToAbsolute("~"),
+                    AuthorizationFilters = new[] {new RemoveAuthorizationFilter()}
+                };
+                app.UseHangfireDashboard("/hangfire", options);
+                GlobalJobFilters.Filters.Add(new ImmediatelyExpireSuccessfulJobs());
+            }
         }
 
         public class RemoveAuthorizationFilter : IAuthorizationFilter
