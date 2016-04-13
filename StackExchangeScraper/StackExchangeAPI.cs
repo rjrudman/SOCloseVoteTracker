@@ -12,7 +12,7 @@ namespace StackExchangeScraper
     {
         private static DateTime _unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private const string API_URL = @"https://api.stackexchange.com/2.2/";
-        private const string QuestionFilterID = "!))xtOtk";
+        private const string QuestionFilterID = "!m)ASytO_4PYB_0kLxW52mH3C9Mvtrk_Q.PoPC9pqVcH-xQGJPH6oSGjD";
         private static readonly StackOverflowAuthenticator Authenticator = new StackOverflowAuthenticator(
             GlobalConfiguration.UserName, 
             GlobalConfiguration.Password,
@@ -90,14 +90,14 @@ namespace StackExchangeScraper
             var client = new RestClient(API_URL);
 
             //Make the filter..
-            var firstRequest = new RestRequest(@"/2.2/filters/create", Method.POST);
-            firstRequest.AddParameter("include", "close_vote_count;closed_date;delete_vote_count;reopen_vote_count");
-            firstRequest.AddParameter("exclude", "exclude=accepted_answer_id;answer_count;bounty_amount;bounty_closes_date;community_owned_date;is_answered;last_activity_date;last_edit_date;locked_date;migrated_from;owner;protected_date;score;view_count");
-            firstRequest.AddParameter("unsafe", false);
-            firstRequest.AddParameter("key", KEY);
-            firstRequest.AddParameter("access_token", _accessToken);
+            //var firstRequest = new RestRequest(@"/2.2/filters/create", Method.POST);
+            //firstRequest.AddParameter("include", "close_vote_count;closed_date;delete_vote_count;reopen_vote_count");
+            //firstRequest.AddParameter("exclude", "exclude=accepted_answer_id;answer_count;bounty_amount;bounty_closes_date;community_owned_date;is_answered;last_activity_date;last_edit_date;locked_date;migrated_from;owner;protected_date;score;view_count");
+            //firstRequest.AddParameter("unsafe", false);
+            //firstRequest.AddParameter("key", KEY);
+            //firstRequest.AddParameter("access_token", _accessToken);
 
-            var f = client.Execute(firstRequest);
+            //var f = client.Execute(firstRequest);
 
             var request = new RestRequest($"questions/{questionIdString}");
             ConfigureRequest(request);
