@@ -9,10 +9,10 @@ namespace StackExchangeScraper
 
         public string Title { get; set; }
         public bool Closed { get; set; }
-        public bool Deleted { get; set; }
+        public bool Deleted { get; set; } // Can't get from API - API does not return deleted questions. We don't know if it's an invalid question id, or deleted.
 
         public int DeleteVotes { get; set; }
-        public int UndeleteVotes { get; set; }
+        public int UndeleteVotes { get; set; } //Can't get from API - API does not return deleted questions. 
         public int ReopenVotes { get; set; }
 
         public int? DuplicateParentId { get; set; }

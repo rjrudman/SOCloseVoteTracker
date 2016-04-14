@@ -1,4 +1,5 @@
 ﻿
+using System.Collections.Generic;
 using StackExchangeScraper;
 
 namespace SOCloseVoteTracker
@@ -7,7 +8,7 @@ namespace SOCloseVoteTracker
     {
         static void Main()
         {
-            StackExchangeAPI.GetQuestions(new[] { 36593212 });
+            StackExchangeAPI.GetQuestions(new Dictionary<int, QuestionModel> { { 36613623 , null} });
             //new Thread(() =>
             //{
             //    Chat.JoinAndWatchRoom(68414);

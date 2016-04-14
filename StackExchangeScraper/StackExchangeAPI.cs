@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using RestSharp;
-using StackExchangeScraper.RestRequests;
+using StackExchangeScraper.APIModels;
 using Utils;
 
 namespace StackExchangeScraper
@@ -12,7 +13,7 @@ namespace StackExchangeScraper
     {
         private static DateTime _unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private const string API_URL = @"https://api.stackexchange.com/2.2/";
-        private const string QuestionFilterID = "!m)ASytO_4PYB_0kLxW52mH3C9Mvtrk_Q.PoPC9pqVcH-xQGJPH6oSGjD";
+        private const string QUESTION_FILTER_ID = "!m)ASytO_4PYB_0kLxW52mH3C9Mvtrk_Q.PoPC9pqVcH-xQGJPH6oSGjD";
         private static readonly StackOverflowAuthenticator Authenticator = new StackOverflowAuthenticator(
             GlobalConfiguration.UserName, 
             GlobalConfiguration.Password,
@@ -32,7 +33,7 @@ namespace StackExchangeScraper
         }
 
         private static readonly Regex AccessTokenRegex = new Regex(@"access_token=(?<accessToken>.+)&expires=(?<expires>\d+)");
-        private static void ConfigureRequest(RestRequest attachToRequest)
+        private static void AuthorizeRequest(IRestRequest attachToRequest)
         {
             lock (AccessTokenLocker)
             {
@@ -74,8 +75,6 @@ namespace StackExchangeScraper
             }
             attachToRequest.AddParameter("key", KEY);
             attachToRequest.AddParameter("access_token", _accessToken);
-            attachToRequest.AddParameter("filter", QuestionFilterID);
-            attachToRequest.AddParameter("site", "stackoverflow.com");
         }
 
         private static DateTime GetDateTimeFromUnixLong(long dateNum)
@@ -83,28 +82,55 @@ namespace StackExchangeScraper
             return _unixEpoch.AddSeconds(dateNum);
         }
 
-        public static QuestionModel GetQuestions(IEnumerable<int> questionIds)
+        public static IEnumerable<QuestionModel> GetQuestions(Dictionary<int, QuestionModel> questions)
         {
-            var questionIdString = string.Join(";", questionIds);
+            var questionIdString = string.Join(";", questions.Select(q => q.Key));
 
             var client = new RestClient(API_URL);
-
-            //Make the filter..
-            //var firstRequest = new RestRequest(@"/2.2/filters/create", Method.POST);
-            //firstRequest.AddParameter("include", "close_vote_count;closed_date;delete_vote_count;reopen_vote_count");
-            //firstRequest.AddParameter("exclude", "exclude=accepted_answer_id;answer_count;bounty_amount;bounty_closes_date;community_owned_date;is_answered;last_activity_date;last_edit_date;locked_date;migrated_from;owner;protected_date;score;view_count");
-            //firstRequest.AddParameter("unsafe", false);
-            //firstRequest.AddParameter("key", KEY);
-            //firstRequest.AddParameter("access_token", _accessToken);
-
-            //var f = client.Execute(firstRequest);
-
             var request = new RestRequest($"questions/{questionIdString}");
-            ConfigureRequest(request);
+            request.AddParameter("filter", QUESTION_FILTER_ID);
+            request.AddParameter("site", "stackoverflow.com");
+            AuthorizeRequest(request);
 
             var response = client.Execute(request);
+            var responseObject = JsonConvert.DeserializeObject<BaseApiModel<QuestionApiModel>>(response.Content);
+            var returnData = new List<QuestionModel>();
+            foreach (var item in responseObject.Items)
+            {
+                var currentInfo = new QuestionModel
+                {
+                    Asked = GetDateTimeFromUnixLong(item.CreateDateInt),
+                    Closed = item.ClosedDetails != null,
+                    Deleted = false, //Not sure at the moment..
+                    DeleteVotes = item.DeleteVotes,
+                    ReopenVotes = item.ReopenVotes,
+                    UndeleteVotes = 0,
+                    Tags = item.Tags,
+                    Id = item.QuestionId,
+                    Title = item.Title,
+                };
 
-            return null;
+                if (item.ClosedDetails != null)
+                {
+                    if (item.ClosedDetails.OriginalQuestions != null && item.ClosedDetails.OriginalQuestions.Any())
+                    {
+                        var dupeTarget = item.ClosedDetails.OriginalQuestions.Select(oq => oq.QuestionId).FirstOrDefault();
+                        currentInfo.DuplicateParentId = dupeTarget;
+                        currentInfo.Dependencies.Add(dupeTarget);
+                    }
+                }
+                else
+                {
+                    if (questions[currentInfo.Id] == null || questions[currentInfo.Id].CloseVotes.Sum(cv => cv.Value) != item.CloseVotes)
+                    {
+                        //Now we need to look at the close votes for this question
+                        //Queue it up
+                    }
+                }
+                returnData.Add(currentInfo);
+            }
+            
+            return returnData;
         }
     }
 }
