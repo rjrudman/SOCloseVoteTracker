@@ -93,6 +93,7 @@
     <Compile Include="Managers\QuestionManager.cs" />
     <Compile Include="Managers\SOCVRManager.cs" />
     <Compile Include="Scrapers\API\APIModels\BaseAPIModel.cs" />
+    <Compile Include="Scrapers\API\APIModels\CloseVoteApiModel.cs" />
     <Compile Include="Scrapers\API\APIModels\QuestionApiModel.cs" />
     <Compile Include="Scrapers\API\StackExchangeAPI.cs" />
     <Compile Include="Scrapers\Authentication\StackOverflowAuthenticator.cs" />

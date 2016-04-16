@@ -81,9 +81,11 @@ SELECT TOP 100 DISTINCT QuestionID FROM QueuedQuestionCloseVoteQueries
 DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(",", questionIds)})
 ");
             }
-            var questionVotes = StackExchangeAPI.GetQuestionVotes(questionIds);
-            foreach (var questionVote in questionVotes)
-                UpsertQuestionCloseVoteInformation(questionVote.Key, questionVote.Value);
+            foreach (var questionId in questionIds)
+            {
+                var questionVoteInfo = StackExchangeAPI.GetQuestionVotes(questionId);
+                UpsertQuestionCloseVoteInformation(questionId, questionVoteInfo);
+            }
         }
 
         private static void UpsertQuestionInformation(QuestionModel question)

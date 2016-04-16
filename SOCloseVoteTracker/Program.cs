@@ -6,7 +6,7 @@ namespace SOCloseVoteTracker
     {
         static void Main()
         {
-            StackExchangeAPI.GetQuestions(new[] { 36613623 } );
+            StackExchangeAPI.GetQuestionVotes(36555152);
             //new Thread(() =>
             //{
             //    Chat.JoinAndWatchRoom(68414);
