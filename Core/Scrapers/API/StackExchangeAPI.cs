@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Core.Scrapers.API.APIModels;
 using Core.Scrapers.Authentication;
 using Core.Scrapers.Models;
@@ -10,6 +11,7 @@ using Data;
 using Data.Entities;
 using Newtonsoft.Json;
 using RestSharp;
+using ServiceStack.Text;
 using Utils;
 
 namespace Core.Scrapers.API
@@ -41,6 +43,26 @@ namespace Core.Scrapers.API
         }
 
         private static readonly Regex AccessTokenRegex = new Regex(@"access_token=(?<accessToken>.+)&expires=(?<expires>\d+)");
+
+        private static object ThrottleLocker = new object();
+        private static DateTime NextAllowedRequestTime = DateTime.MinValue;
+
+        private static void ThrottleRequest()
+        {
+            lock (ThrottleLocker)
+            {
+                if (NextAllowedRequestTime > DateTime.Now)
+                    Thread.Sleep((int)Math.Ceiling((NextAllowedRequestTime - DateTime.Now).TotalMilliseconds));
+            }
+        }
+
+        private static void AssignNewThrottle<TModelType>(BaseApiModel<TModelType> response)
+        {
+            if (response.BackOff.HasValue)
+                lock (ThrottleLocker)
+                    NextAllowedRequestTime = DateTime.Now.AddSeconds(response.BackOff.Value + 2);
+        }
+
         private static void AuthorizeRequest(IRestRequest attachToRequest)
         {
             lock (AccessTokenLocker)
@@ -99,9 +121,11 @@ namespace Core.Scrapers.API
             request.AddParameter("filter", QUESTION_FILTER_ID);
             request.AddParameter("site", "stackoverflow.com");
             AuthorizeRequest(request);
+            ThrottleRequest();
 
             var response = client.Execute(request);
             var responseObject = JsonConvert.DeserializeObject<BaseApiModel<QuestionApiModel>>(response.Content);
+            AssignNewThrottle(responseObject);
             var returnData = new List<QuestionModel>();
 
             Dictionary<int, Question> questionMapping;
@@ -164,10 +188,11 @@ namespace Core.Scrapers.API
             request.AddParameter("filter", CLOSE_VOTE_FILTER_ID);
             request.AddParameter("site", "stackoverflow.com");
             AuthorizeRequest(request);
+            ThrottleRequest();
 
             var response = client.Execute(request);
             var responseObject = JsonConvert.DeserializeObject<BaseApiModel<CloseVoteApiModel>>(response.Content);
-
+            AssignNewThrottle(responseObject);
             var flattenedCloseVotes = FlattenCloseVotes(responseObject.Items);
             var voteTypesWithCount = flattenedCloseVotes.Where(v => v.Count > 0);
             var voteResults = new Dictionary<int, int>();

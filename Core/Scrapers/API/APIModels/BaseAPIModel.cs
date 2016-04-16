@@ -9,5 +9,7 @@ namespace Core.Scrapers.API.APIModels
         public IList<T> Items { get; set; }
         [JsonProperty("quota_remaining")]
         public int QuotaRemaining { get; set; }
+        [JsonProperty("backoff")]
+        public int? BackOff { get; set; }
     }
 }
