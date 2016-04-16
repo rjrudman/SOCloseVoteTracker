@@ -56,6 +56,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\QueuedQuestionCloseVoteQuery.cs" />
+    <Compile Include="Entities\QueuedQuestionQuery.cs" />
     <Compile Include="Migrations\201604130012232_ClearOldHangfireJobs.cs" />
     <Compile Include="Migrations\201604130012232_ClearOldHangfireJobs.Designer.cs">
       <DependentUpon>201604130012232_ClearOldHangfireJobs.cs</DependentUpon>

@@ -21,7 +21,5 @@ namespace Core.Scrapers.Models
         
         public IList<string> Tags { get; set; }
         public IDictionary<int,int> CloseVotes { get; set; }
-
-        public IList<int> Dependencies = new List<int>(); 
     }
 }

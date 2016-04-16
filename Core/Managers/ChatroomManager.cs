@@ -69,7 +69,7 @@ namespace Core.Managers
                 int questionId;
 
                 if (int.TryParse(questionIDstr, out questionId))
-                    Pollers.EnqueueTask(() => QueryQuestionAndLogRequest(userId, questionId, content));
+                    QueryQuestionAndLogRequest(userId, questionId, content);
             }
         }
         
@@ -81,7 +81,7 @@ namespace Core.Managers
                 connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });
 
             //Check on the question again in an hour
-            Pollers.QueueQuestionQuery(questionId, TimeSpan.FromHours(1));
+            Pollers.QueueQuestionQuery(questionId);
         }
 
         const string UPSERT_CVPLS_SQL = @"INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@UserId, @QuestionId, @FullMessage, GETUTCDATE())";

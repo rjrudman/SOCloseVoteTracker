@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Linq.Expressions;
 using Core.Managers;
+using Core.Scrapers;
+using Core.Scrapers.Sockets;
 using Dapper;
 using Data;
 
@@ -20,6 +20,7 @@ namespace Core.Workers
                 //RecurringJob.AddOrUpdate(() => PollRecentCloseVotes(), "*/5 * * * *");
                 //RecurringJob.AddOrUpdate(() => PollMostCloseVotes(), "*/5 * * * *");
                 //RecurringJob.AddOrUpdate(() => ReviewManager.GetRecentCloseVoteReviews(), "*/5 * * * *");
+
                 ////Every hour
                 //RecurringJob.AddOrUpdate(() => SOCVRManager.CheckCVPls(), "0 * * * *");
 
@@ -35,9 +36,9 @@ namespace Core.Workers
                 ////Every day
                 //RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
 
-                //ChatroomManager.JoinAndWatchSOCVR();
+                ChatroomManager.JoinAndWatchSOCVR();
 
-                //PollFrontPage();
+                PollFrontPage();
             }
         }
         
@@ -71,75 +72,61 @@ namespace Core.Workers
                     QueueQuestionQuery(questionId);
             }
         }
-        
-        //public static void PollFrontPage()
-        //{
-        //    ActiveQuestionsPoller.Register(question =>
-        //    {
-        //        if (question.SiteBaseHostAddress == "stackoverflow.com")
-        //            QueueQuestionQuery((int) question.ID, TimeSpan.FromMinutes(15));
-        //    });
-        //}
 
-        //public static void RecentlyClosed()
-        //{
-        //    QueueQuestionQueries(QuestionScraper.GetRecentlyClosed());
-        //}
-
-        //public static void PollMostCloseVotes()
-        //{
-        //    QueueQuestionQueries(QuestionScraper.GetMostVotedCloseVotesQuestionIds());
-        //}
-
-        //public static void PollRecentCloseVotes()
-        //{
-        //    QueueQuestionQueries(QuestionScraper.GetRecentCloseVoteQuestionIds());
-        //}
-
-        public static void QueueQuestionQueries(IEnumerable<int> questionIds)
+        public static void PollFrontPage()
         {
-            foreach(var questionId in questionIds)
-                QueueQuestionQuery(questionId);
+            ActiveQuestionsPoller.Register(question =>
+            {
+                if (question.SiteBaseHostAddress == "stackoverflow.com")
+                    QueueQuestionQuery((int)question.ID);
+            });
         }
 
-        public static void QueueQuestionQuery(int questionId, TimeSpan? after = null, bool forceEnqueue = false)
+        public static void RecentlyClosed()
+        {
+            QueueQuestionQueries(SEDataScraper.GetRecentlyClosed());
+        }
+
+        public static void PollMostCloseVotes()
+        {
+            QueueQuestionQueries(SEDataScraper.GetMostVotedCloseVotesQuestionIds());
+        }
+
+        public static void PollRecentCloseVotes()
+        {
+            QueueQuestionQueries(SEDataScraper.GetRecentCloseVoteQuestionIds());
+        }
+
+        public static void QueueQuestionQuery(int questionId)
         {
             using (var con = ReadWriteDataContext.ReadWritePlainConnection())
-                QueueQuestionQuery(con, questionId, after, forceEnqueue);
-        }
-
-        public static void QueueQuestionQuery(IDbConnection con, int questionId, TimeSpan? after = null, bool forceEnqueue = false)
-        {
-            using (var trans = con.BeginTransaction())
             {
-                var newQueueTime = DateTime.UtcNow;
-                if (after.HasValue)
-                    newQueueTime = newQueueTime.Add(after.Value);
-
-                var nextQueueTime = con.Query<DateTime?>("SELECT MIN(ProcessTime) FROM QueuedQuestionQueries with (XLOCK, ROWLOCK) WHERE QuestionId = @id", new {id = questionId}, trans).FirstOrDefault();
-                if (nextQueueTime != null && nextQueueTime.Value > DateTime.UtcNow && nextQueueTime.Value < newQueueTime)
-                    return;
-
-                con.Execute("INSERT INTO QueuedQuestionQueries(QuestionId, ProcessTime) VALUES (@id, @newQueueTime)", new {newQueueTime, id = questionId}, trans);
-                trans.Commit();
-
-                if (after == null)
-                    EnqueueTask(() => QuestionManager.QueryQuestion(questionId, forceEnqueue));
-                else
-                    ScheduleTask(() => QuestionManager.QueryQuestion(questionId, forceEnqueue), after.Value);
+                con.Execute(@"
+INSERT INTO QueuedQuestionQueries (questionId) VALUES (@questionId)
+", new { questionId });
             }
         }
 
-        public static void ScheduleTask(Expression<Action> expr, TimeSpan after)
+        public static void QueueCloseVoteQuery(int questionId)
         {
-            //if (Utils.GlobalConfiguration.EnableHangfire)
-            //    BackgroundJob.Schedule(expr, after);
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
+            {
+                con.Execute(@"
+INSERT INTO QueuedQuestionCloseVoteQueries (questionId) VALUES (@questionId)
+", new { questionId});
+            }
         }
 
-        public static void EnqueueTask(Expression<Action> expr)
+        public static void QueueQuestionQueries(IEnumerable<int> questionIds)
         {
-            //if (Utils.GlobalConfiguration.EnableHangfire)
-            //    BackgroundJob.Enqueue(expr);
+            foreach (var questionId in questionIds)
+                QueueQuestionQuery(questionId);
+        }
+
+        public static void QueueCloseVoteQueries(IEnumerable<int> questionIds)
+        {
+            foreach (var questionId in questionIds)
+                QueueCloseVoteQuery(questionId);
         }
     }
 }

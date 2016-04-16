@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Core.Scrapers.API.APIModels;
 using Core.Scrapers.Authentication;
 using Core.Scrapers.Models;
+using Core.Workers;
 using Data;
 using Data.Entities;
 using Newtonsoft.Json;
@@ -86,7 +87,7 @@ namespace Core.Scrapers.API
             return _unixEpoch.AddSeconds(dateNum);
         }
 
-        public static IEnumerable<QuestionModel> GetQuestions(IEnumerable<int> questionIds)
+        public static IEnumerable<QuestionModel> GetQuestions(IList<int> questionIds)
         {
             var questionIdString = string.Join(";", questionIds);
 
@@ -125,23 +126,22 @@ namespace Core.Scrapers.API
                     {
                         var dupeTarget = item.ClosedDetails.OriginalQuestions.Select(oq => oq.QuestionId).FirstOrDefault();
                         currentInfo.DuplicateParentId = dupeTarget;
-                        currentInfo.Dependencies.Add(dupeTarget);
                     }
                 }
                 else
                 {
                     if (questionMapping[currentInfo.Id] == null || questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes)
-                    {
-                        //Pollers
-
-                        //Now we need to look at the close votes for this question
-                        //Queue it up
-                    }
+                        Pollers.QueueCloseVoteQuery(currentInfo.Id);
                 }
                 returnData.Add(currentInfo);
             }
             
             return returnData;
+        }
+
+        public static IDictionary<int, IDictionary<int, int>> GetQuestionVotes(IEnumerable<int> questionIds)
+        {
+            return null;
         }
     }
 }

@@ -37,6 +37,8 @@ namespace Data
         public DbSet<CVPlsRequest> CVPlsRequests { get; set; }
         public DbSet<WebRequest> WebRequests { get; set; }
         public DbSet<OrderStatusChange> OrderStatusChanges { get; set; }
+        public DbSet<QueuedQuestionQuery> QueuedQuestionQueries { get; set; }
+        public DbSet<QueuedQuestionCloseVoteQuery> QueuedQuestionCloseVoteQueries { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -48,7 +50,9 @@ namespace Data
             modelBuilder.Entity<CVPlsRequest>().ToTable("CVPlsRequests");
             modelBuilder.Entity<WebRequest>().ToTable("WebRequests");
             modelBuilder.Entity<OrderStatusChange>().ToTable("OrderStatusChanges");
-            
+            modelBuilder.Entity<QueuedQuestionQuery>().ToTable("QueuedQuestionQueries");
+            modelBuilder.Entity<QueuedQuestionCloseVoteQuery>().ToTable("QueuedQuestionCloseVoteQueries");
+
             modelBuilder.Entity<Question>()
                 .HasMany(q => q.Tags)
                 .WithMany(t => t.Questions)

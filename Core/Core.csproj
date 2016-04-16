@@ -97,7 +97,10 @@
     <Compile Include="Scrapers\API\StackExchangeAPI.cs" />
     <Compile Include="Scrapers\Authentication\StackOverflowAuthenticator.cs" />
     <Compile Include="Scrapers\Chat\LiteChatScraper.cs" />
+    <Compile Include="Scrapers\HTMLScraper.cs" />
     <Compile Include="Scrapers\Models\QuestionModel.cs" />
+    <Compile Include="Scrapers\Sockets\ActiveQuestionSocket.cs" />
+    <Compile Include="Scrapers\Sockets\BaseStackExchangeSocket.cs" />
     <Compile Include="Scrapers\Sockets\ExchangeSite.cs" />
     <Compile Include="Scrapers\Utils\RestRequestThrottler.cs" />
     <Compile Include="Scrapers\Utils\TimeSpanSemaphore.cs" />
