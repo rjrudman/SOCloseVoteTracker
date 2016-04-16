@@ -6,6 +6,7 @@ using System.Threading;
 using Core.Scrapers.API.APIModels;
 using Core.Scrapers.Authentication;
 using Core.Scrapers.Models;
+using Core.Scrapers.Utils;
 using Core.Workers;
 using Data;
 using Data.Entities;
@@ -42,6 +43,10 @@ namespace Core.Scrapers.API
         }
 
         private static readonly Regex AccessTokenRegex = new Regex(@"access_token=(?<accessToken>.+)&expires=(?<expires>\d+)");
+
+        private const int MAX_CONCURRENT_REQUESTS = 25;
+        private const int TIMESPAN_PER_REQUEST = 1; //One second
+        private static readonly TimeSpanSemaphore _globalThrottle = new TimeSpanSemaphore(MAX_CONCURRENT_REQUESTS, TimeSpan.FromSeconds(TIMESPAN_PER_REQUEST));
 
         private static void AuthorizeRequest(IRestRequest attachToRequest)
         {
@@ -204,11 +209,16 @@ namespace Core.Scrapers.API
 
         private static BaseApiModel<TModelType> AuthenticateAndThrottle<TModelType>(this IRestClient client, IRestRequest request)
         {
-            AuthorizeRequest(request);
-            ThrottleRequest();
-            var response = client.Execute(request);
-            var responseObject = JsonConvert.DeserializeObject<BaseApiModel<TModelType>>(response.Content);
-            AssignNewThrottle(responseObject);
+            BaseApiModel<TModelType> responseObject = null;
+            _globalThrottle.Run(() =>
+            {
+                AuthorizeRequest(request);
+                ThrottleRequest();
+            
+                var response = client.Execute(request);
+                responseObject = JsonConvert.DeserializeObject<BaseApiModel<TModelType>>(response.Content);
+                AssignNewThrottle(responseObject);
+            }, new CancellationToken());
             return responseObject;
         }
 
@@ -227,9 +237,11 @@ namespace Core.Scrapers.API
 
         private static void AssignNewThrottle<TModelType>(BaseApiModel<TModelType> response)
         {
-            if (response.BackOff.HasValue)
-                lock (ThrottleLocker)
-                    _nextAllowedRequestTime = DateTime.Now.AddSeconds(response.BackOff.Value + 2);
+            if (!response.BackOff.HasValue)
+                return;
+
+            lock (ThrottleLocker)
+                _nextAllowedRequestTime = DateTime.Now.AddSeconds(response.BackOff.Value + 2);
         }
     }
 }
