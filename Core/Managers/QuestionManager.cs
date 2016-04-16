@@ -193,8 +193,11 @@ DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(","
                             numCloseVotesChanged = true;
                         }
                     }
+                    
                     if (numCloseVotesChanged)
-                        connection.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = questionId });
+                        connection.Execute(@"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE(), LastTimeActive = GETUTCDATE WHERE Id = @questionId", new { questionId = questionId });
+                    else
+                        connection.Execute(@"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE() WHERE Id = @questionId", new { questionId = questionId });
 
                     trans.Commit();
                 }
