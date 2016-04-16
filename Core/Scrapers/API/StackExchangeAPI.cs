@@ -11,7 +11,6 @@ using Data;
 using Data.Entities;
 using Newtonsoft.Json;
 using RestSharp;
-using ServiceStack.Text;
 using Utils;
 
 namespace Core.Scrapers.API
@@ -43,25 +42,6 @@ namespace Core.Scrapers.API
         }
 
         private static readonly Regex AccessTokenRegex = new Regex(@"access_token=(?<accessToken>.+)&expires=(?<expires>\d+)");
-
-        private static object ThrottleLocker = new object();
-        private static DateTime NextAllowedRequestTime = DateTime.MinValue;
-
-        private static void ThrottleRequest()
-        {
-            lock (ThrottleLocker)
-            {
-                if (NextAllowedRequestTime > DateTime.Now)
-                    Thread.Sleep((int)Math.Ceiling((NextAllowedRequestTime - DateTime.Now).TotalMilliseconds));
-            }
-        }
-
-        private static void AssignNewThrottle<TModelType>(BaseApiModel<TModelType> response)
-        {
-            if (response.BackOff.HasValue)
-                lock (ThrottleLocker)
-                    NextAllowedRequestTime = DateTime.Now.AddSeconds(response.BackOff.Value + 2);
-        }
 
         private static void AuthorizeRequest(IRestRequest attachToRequest)
         {
@@ -120,19 +100,16 @@ namespace Core.Scrapers.API
             var request = new RestRequest($"questions/{questionIdString}");
             request.AddParameter("filter", QUESTION_FILTER_ID);
             request.AddParameter("site", "stackoverflow.com");
-            AuthorizeRequest(request);
-            ThrottleRequest();
 
-            var response = client.Execute(request);
-            var responseObject = JsonConvert.DeserializeObject<BaseApiModel<QuestionApiModel>>(response.Content);
-            AssignNewThrottle(responseObject);
+            var response = client.AuthenticateAndThrottle<QuestionApiModel>(request);
+            
             var returnData = new List<QuestionModel>();
 
             Dictionary<int, Question> questionMapping;
             using (var context = new ReadWriteDataContext())
                 questionMapping = context.Questions.Where(q => questionIds.Contains(q.Id)).ToDictionary(q => q.Id, q => q);
         
-            foreach (var item in responseObject.Items)
+            foreach (var item in response.Items)
             {
                 var currentInfo = new QuestionModel
                 {
@@ -166,6 +143,7 @@ namespace Core.Scrapers.API
             return returnData;
         }
 
+        //Move this to the database..?
         private static readonly Dictionary<string, int> VoteTypeTitleMapping = new Dictionary<string, int>
         {
             {"Migration", 2},
@@ -187,13 +165,10 @@ namespace Core.Scrapers.API
             var request = new RestRequest($"questions/{questionId}/close/options");
             request.AddParameter("filter", CLOSE_VOTE_FILTER_ID);
             request.AddParameter("site", "stackoverflow.com");
-            AuthorizeRequest(request);
-            ThrottleRequest();
+            
+            var response = client.AuthenticateAndThrottle<CloseVoteApiModel>(request);
 
-            var response = client.Execute(request);
-            var responseObject = JsonConvert.DeserializeObject<BaseApiModel<CloseVoteApiModel>>(response.Content);
-            AssignNewThrottle(responseObject);
-            var flattenedCloseVotes = FlattenCloseVotes(responseObject.Items);
+            var flattenedCloseVotes = FlattenCloseVotes(response.Items);
             var voteTypesWithCount = flattenedCloseVotes.Where(v => v.Count > 0);
             var voteResults = new Dictionary<int, int>();
 
@@ -217,10 +192,44 @@ namespace Core.Scrapers.API
 
         private static IEnumerable<CloseVoteApiModel> FlattenCloseVotes(IEnumerable<CloseVoteApiModel> votes)
         {
-            if (!votes.Any(v => v.SubOptions != null))
-                return votes;
+            while (true)
+            {
+                var closeVoteApiModels = votes as IList<CloseVoteApiModel> ?? votes.ToList();
+                if (closeVoteApiModels.All(v => v.SubOptions == null))
+                    return closeVoteApiModels;
 
-            return FlattenCloseVotes(votes.Where(v => v.SubOptions == null).Union(votes.Where(v => v.SubOptions != null).SelectMany(v => v.SubOptions)));
+                votes = closeVoteApiModels.Where(v => v.SubOptions == null).Union(closeVoteApiModels.Where(v => v.SubOptions != null).SelectMany(v => v.SubOptions));
+            }
+        }
+
+        private static BaseApiModel<TModelType> AuthenticateAndThrottle<TModelType>(this IRestClient client, IRestRequest request)
+        {
+            AuthorizeRequest(request);
+            ThrottleRequest();
+            var response = client.Execute(request);
+            var responseObject = JsonConvert.DeserializeObject<BaseApiModel<TModelType>>(response.Content);
+            AssignNewThrottle(responseObject);
+            return responseObject;
+        }
+
+
+        private static readonly object ThrottleLocker = new object();
+        private static DateTime _nextAllowedRequestTime = DateTime.MinValue;
+
+        private static void ThrottleRequest()
+        {
+            lock (ThrottleLocker)
+            {
+                if (_nextAllowedRequestTime > DateTime.Now)
+                    Thread.Sleep((int)Math.Ceiling((_nextAllowedRequestTime - DateTime.Now).TotalMilliseconds));
+            }
+        }
+
+        private static void AssignNewThrottle<TModelType>(BaseApiModel<TModelType> response)
+        {
+            if (response.BackOff.HasValue)
+                lock (ThrottleLocker)
+                    _nextAllowedRequestTime = DateTime.Now.AddSeconds(response.BackOff.Value + 2);
         }
     }
 }
