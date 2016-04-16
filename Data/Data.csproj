@@ -62,6 +62,10 @@
     <Compile Include="Migrations\201604130012232_ClearOldHangfireJobs.Designer.cs">
       <DependentUpon>201604130012232_ClearOldHangfireJobs.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201604160520166_QueuedAndCloseVoteQueue.cs" />
+    <Compile Include="Migrations\201604160520166_QueuedAndCloseVoteQueue.Designer.cs">
+      <DependentUpon>201604160520166_QueuedAndCloseVoteQueue.cs</DependentUpon>
+    </Compile>
     <Compile Include="ReadWriteDataContext.cs" />
     <Compile Include="Entities\CloseVote.cs" />
     <Compile Include="Entities\CVPlsRequest.cs" />
@@ -243,6 +247,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604130012232_ClearOldHangfireJobs.resx">
       <DependentUpon>201604130012232_ClearOldHangfireJobs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604160520166_QueuedAndCloseVoteQueue.resx">
+      <DependentUpon>201604160520166_QueuedAndCloseVoteQueue.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

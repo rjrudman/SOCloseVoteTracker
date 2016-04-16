@@ -7,12 +7,10 @@ using System.Net;
 using System.Threading;
 using System.Web;
 using System.Web.Mvc;
-using Core;
 using Core.Workers;
 using Dapper;
 using Data;
 using Data.Entities;
-using RestSharp;
 
 namespace WebUI.Controllers
 {
@@ -54,13 +52,13 @@ namespace WebUI.Controllers
         public ActionResult RefreshQuestionIds(List<int> questionIds)
         {
             foreach (var questionId in questionIds)
-                Pollers.QueueQuestionQuery(questionId, null, true);
+                Pollers.QueueQuestionQuery(questionId);
 
             return new HttpStatusCodeResult(HttpStatusCode.NoContent);
         }
         public ActionResult EnqueueAndRedirect(int questionId)
         {
-            new Thread(() => Pollers.QueueQuestionQuery(questionId, TimeSpan.FromMinutes(2), true)).Start();
+            new Thread(() => Pollers.QueueQuestionQuery(questionId)).Start();
             return Redirect($"http://stackoverflow.com/q/{questionId}");
         }
 
@@ -72,7 +70,7 @@ namespace WebUI.Controllers
                 {
                     var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new { reviewId = reviewId }).FirstOrDefault();
                     if (questionId != null)
-                        Pollers.QueueQuestionQuery(questionId.Value, TimeSpan.FromMinutes(2), true);
+                        Pollers.QueueQuestionQuery(questionId.Value);
                 }
             }).Start();
             return Redirect($"http://stackoverflow.com/review/close/{reviewId}");

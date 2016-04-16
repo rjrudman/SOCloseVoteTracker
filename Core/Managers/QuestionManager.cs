@@ -53,12 +53,15 @@ FROM q
         public static void QueryQueuedQuestions()
         {
             IList<int> questionIds;
-            using (var con = ReadWriteDataContext.ReadOnlyPlainConnection())
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 questionIds = con.Query<int>(@"
 SELECT TOP 100 DISTINCT QuestionID FROM QueuedQuestionQueries
 ")
 .ToList();
+                con.Execute($@"
+DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questionIds)})
+");
             }
             var questionModels = StackExchangeAPI.GetQuestions(questionIds);
             foreach (var questionModel in questionModels)
@@ -68,12 +71,15 @@ SELECT TOP 100 DISTINCT QuestionID FROM QueuedQuestionQueries
         public static void QueryQueuedCloseVotes()
         {
             IList<int> questionIds;
-            using (var con = ReadWriteDataContext.ReadOnlyPlainConnection())
+            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 questionIds = con.Query<int>(@"
 SELECT TOP 100 DISTINCT QuestionID FROM QueuedQuestionCloseVoteQueries
 ")
 .ToList();
+                con.Execute($@"
+DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(",", questionIds)})
+");
             }
             var questionVotes = StackExchangeAPI.GetQuestionVotes(questionIds);
             foreach (var questionVote in questionVotes)

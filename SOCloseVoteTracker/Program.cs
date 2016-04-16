@@ -1,7 +1,4 @@
-﻿
-using System.Collections.Generic;
-using Core.Scrapers.API;
-using Core.Scrapers.Models;
+﻿using Core.Scrapers.API;
 
 namespace SOCloseVoteTracker
 {
