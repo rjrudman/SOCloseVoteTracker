@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Core.Scrapers.API;
 using Core.Scrapers.Models;
@@ -56,8 +57,12 @@ FROM q
             using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 questionIds = con.Query<int>(@"
-SELECT DISTINCT TOP 100 QuestionID FROM QueuedQuestionQueries
-")
+SELECT DISTINCT TOP 100 QuestionID, LastUpdated 
+FROM QueuedQuestionQueries
+LEFT JOIN Questions on QueuedQuestionQueries.QuestionId < Questions.Id
+WHERE Questions.Id IS NULL
+OR Questions.LastUpdated < @fiveMinAgo
+", new { fiveMinAgo = DateTime.UtcNow.AddMinutes(-5) })
 .ToList();
                 if (!questionIds.Any())
                     return;
@@ -77,8 +82,12 @@ DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questio
             using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 questionIds = con.Query<int>(@"
-SELECT DISTINCT TOP 100 QuestionID FROM QueuedQuestionCloseVoteQueries
-")
+SELECT DISTINCT TOP 100 QuestionID, LastUpdated 
+FROM QueuedQuestionCloseVoteQueries
+LEFT JOIN Questions on QueuedQuestionCloseVoteQueries.QuestionId < Questions.Id
+WHERE Questions.Id IS NULL
+OR Questions.LastUpdated < @fiveMinAgo
+", new { fiveMinAgo = DateTime.UtcNow.AddMinutes(-5) })
 .ToList();
                 if (!questionIds.Any())
                     return;
