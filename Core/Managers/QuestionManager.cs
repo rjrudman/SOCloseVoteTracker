@@ -59,6 +59,9 @@ FROM q
 SELECT DISTINCT TOP 100 QuestionID FROM QueuedQuestionQueries
 ")
 .ToList();
+                if (!questionIds.Any())
+                    return;
+
                 con.Execute($@"
 DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questionIds)})
 ");
@@ -77,6 +80,9 @@ DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questio
 SELECT DISTINCT TOP 100 QuestionID FROM QueuedQuestionCloseVoteQueries
 ")
 .ToList();
+                if (!questionIds.Any())
+                    return;
+
                 con.Execute($@"
 DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(",", questionIds)})
 ");
