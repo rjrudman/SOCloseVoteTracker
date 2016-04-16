@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using AngleSharp.Html;
+using Core.Scrapers.Authentication;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using WebSocketSharp;
 using RestSharp;
 using Utils;
+using WebSocketSharp;
 
-namespace StackExchangeScraper
+namespace Core.Scrapers.Chat
 {
     public static class LiteChatScraper
     {

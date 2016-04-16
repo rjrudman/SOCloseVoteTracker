@@ -3,7 +3,7 @@ using System.Linq;
 using Core.Workers;
 using Data;
 
-namespace Core
+namespace Core.Managers
 {
     public static class SOCVRManager
     {

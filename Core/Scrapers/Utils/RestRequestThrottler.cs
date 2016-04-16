@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
-using Core.RestRequests;
+using Core.Scrapers.Authentication;
 using RestSharp;
 
-namespace StackExchangeScraper.RestRequests
+namespace Core.Scrapers.Utils
 {
     public class RestRequestThrottler
     {

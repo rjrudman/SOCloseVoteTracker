@@ -1,5 +1,5 @@
 ﻿// ReSharper disable InconsistentNaming
-namespace Core.Sockets
+namespace Core.Scrapers.Sockets
 {
     //Taken from http://meta.stackexchange.com/a/222845/300713
     public enum ExchangeSite

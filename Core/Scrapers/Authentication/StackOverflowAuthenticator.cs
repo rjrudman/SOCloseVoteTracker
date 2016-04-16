@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Core.Scrapers.Utils;
 using RestSharp;
-using StackExchangeScraper.RestRequests;
 
-namespace StackExchangeScraper
+namespace Core.Scrapers.Authentication
 {
     public class StackOverflowAuthenticator
     {

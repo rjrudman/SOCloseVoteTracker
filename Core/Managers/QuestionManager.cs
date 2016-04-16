@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Scrapers.Models;
 using Dapper;
 using Data;
 using Data.Entities;
-using StackExchangeScraper;
 
 namespace Core.Managers
 {
@@ -70,14 +70,14 @@ FROM q
                 }
             }
 
-            var question = QuestionScraper.GetQuestionInformation(questionId);
-            if (question == null)
-                return;
+            //var question = QuestionScraper.GetQuestionInformation(questionId);
+            //if (question == null)
+            //    return;
 
-            foreach (var dependency in question.Dependencies)
-                QueryQuestion(dependency, false);
+            //foreach (var dependency in question.Dependencies)
+            //    QueryQuestion(dependency, false);
 
-            UpsertQuestionInformation(question);
+            //UpsertQuestionInformation(question);
         }
 
         private static void UpsertQuestionInformation(QuestionModel question)

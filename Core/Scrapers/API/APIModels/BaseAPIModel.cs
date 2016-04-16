@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace StackExchangeScraper.APIModels
+namespace Core.Scrapers.API.APIModels
 {
     public class BaseApiModel<T>
     {

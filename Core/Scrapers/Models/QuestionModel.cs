@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace StackExchangeScraper
+namespace Core.Scrapers.Models
 {
     public class QuestionModel
     {

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 
 //https://raw.githubusercontent.com/joelfillmore/JFLibrary/master/JFLibrary/TimeSpanSemaphore.cs
-namespace Core.RestRequests
+namespace Core.Scrapers.Utils
 {
     /// <summary>
     /// Allows a limited number of acquisitions during a timespan

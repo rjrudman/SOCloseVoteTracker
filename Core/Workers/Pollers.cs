@@ -6,8 +6,6 @@ using System.Linq.Expressions;
 using Core.Managers;
 using Dapper;
 using Data;
-using StackExchangeScraper;
-using StackExchangeScraper.Sockets;
 
 namespace Core.Workers
 {
@@ -37,9 +35,9 @@ namespace Core.Workers
                 ////Every day
                 //RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
 
-                ChatroomManager.JoinAndWatchSOCVR();
+                //ChatroomManager.JoinAndWatchSOCVR();
 
-                PollFrontPage();
+                //PollFrontPage();
             }
         }
         
@@ -74,29 +72,29 @@ namespace Core.Workers
             }
         }
         
-        public static void PollFrontPage()
-        {
-            ActiveQuestionsPoller.Register(question =>
-            {
-                if (question.SiteBaseHostAddress == "stackoverflow.com")
-                    QueueQuestionQuery((int) question.ID, TimeSpan.FromMinutes(15));
-            });
-        }
+        //public static void PollFrontPage()
+        //{
+        //    ActiveQuestionsPoller.Register(question =>
+        //    {
+        //        if (question.SiteBaseHostAddress == "stackoverflow.com")
+        //            QueueQuestionQuery((int) question.ID, TimeSpan.FromMinutes(15));
+        //    });
+        //}
 
-        public static void RecentlyClosed()
-        {
-            QueueQuestionQueries(QuestionScraper.GetRecentlyClosed());
-        }
+        //public static void RecentlyClosed()
+        //{
+        //    QueueQuestionQueries(QuestionScraper.GetRecentlyClosed());
+        //}
 
-        public static void PollMostCloseVotes()
-        {
-            QueueQuestionQueries(QuestionScraper.GetMostVotedCloseVotesQuestionIds());
-        }
+        //public static void PollMostCloseVotes()
+        //{
+        //    QueueQuestionQueries(QuestionScraper.GetMostVotedCloseVotesQuestionIds());
+        //}
 
-        public static void PollRecentCloseVotes()
-        {
-            QueueQuestionQueries(QuestionScraper.GetRecentCloseVoteQuestionIds());
-        }
+        //public static void PollRecentCloseVotes()
+        //{
+        //    QueueQuestionQueries(QuestionScraper.GetRecentCloseVoteQuestionIds());
+        //}
 
         public static void QueueQuestionQueries(IEnumerable<int> questionIds)
         {

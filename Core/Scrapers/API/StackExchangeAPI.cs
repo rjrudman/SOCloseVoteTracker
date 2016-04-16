@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Core.Scrapers.API.APIModels;
+using Core.Scrapers.Authentication;
+using Core.Scrapers.Models;
+using Data;
+using Data.Entities;
 using Newtonsoft.Json;
 using RestSharp;
-using StackExchangeScraper.APIModels;
 using Utils;
 
-namespace StackExchangeScraper
+namespace Core.Scrapers.API
 {
     public static class StackExchangeAPI
     {
@@ -82,9 +86,9 @@ namespace StackExchangeScraper
             return _unixEpoch.AddSeconds(dateNum);
         }
 
-        public static IEnumerable<QuestionModel> GetQuestions(Dictionary<int, QuestionModel> questions)
+        public static IEnumerable<QuestionModel> GetQuestions(IEnumerable<int> questionIds)
         {
-            var questionIdString = string.Join(";", questions.Select(q => q.Key));
+            var questionIdString = string.Join(";", questionIds);
 
             var client = new RestClient(API_URL);
             var request = new RestRequest($"questions/{questionIdString}");
@@ -95,6 +99,11 @@ namespace StackExchangeScraper
             var response = client.Execute(request);
             var responseObject = JsonConvert.DeserializeObject<BaseApiModel<QuestionApiModel>>(response.Content);
             var returnData = new List<QuestionModel>();
+
+            Dictionary<int, Question> questionMapping;
+            using (var context = new ReadOnlyDataContext())
+                questionMapping = context.Questions.Where(q => questionIds.Contains(q.Id)).ToDictionary(q => q.Id, q => q);
+        
             foreach (var item in responseObject.Items)
             {
                 var currentInfo = new QuestionModel
@@ -121,8 +130,10 @@ namespace StackExchangeScraper
                 }
                 else
                 {
-                    if (questions[currentInfo.Id] == null || questions[currentInfo.Id].CloseVotes.Sum(cv => cv.Value) != item.CloseVotes)
+                    if (questionMapping[currentInfo.Id] == null || questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes)
                     {
+                        //Pollers
+
                         //Now we need to look at the close votes for this question
                         //Queue it up
                     }

@@ -34,6 +34,14 @@
     <Reference Include="AngleSharp">
       <HintPath>..\packages\AngleSharp.0.3.1\lib\portable-win+net45+wp80\AngleSharp.dll</HintPath>
     </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -43,7 +51,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.Linq" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -56,24 +66,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="APIModels\BaseAPIModel.cs" />
-    <Compile Include="APIModels\QuestionApiModel.cs" />
-    <Compile Include="LiteChatScraper.cs" />
-    <Compile Include="QuestionModel.cs" />
     <Compile Include="QuestionScraper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RestRequests\RestRequestThrottler.cs" />
-    <Compile Include="RestRequests\TimeSpanSemaphore.cs" />
-    <Compile Include="Sockets\ActiveQuestionSocket.cs" />
-    <Compile Include="Sockets\BaseStackExchangeSocket.cs" />
-    <Compile Include="Sockets\ExchangeSite.cs" />
-    <Compile Include="StackExchangeAPI.cs" />
-    <Compile Include="StackOverflowAuthenticator.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Data\Data.csproj">
+      <Project>{7dd019c3-42a1-4f45-b2e4-1ee18bcd7caf}</Project>
+      <Name>Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{1B18CBB6-FB29-4F96-B9F5-E870A9983C67}</Project>
       <Name>Utils</Name>

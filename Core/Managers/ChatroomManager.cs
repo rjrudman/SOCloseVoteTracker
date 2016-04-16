@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Core.Scrapers.Chat;
 using Core.Workers;
 using Dapper;
 using Data;
 using Newtonsoft.Json.Linq;
-using StackExchangeScraper;
 
 namespace Core.Managers
 {

@@ -99,10 +99,6 @@
       <Project>{7DD019C3-42A1-4F45-B2E4-1EE18BCD7CAF}</Project>
       <Name>Data</Name>
     </ProjectReference>
-    <ProjectReference Include="..\StackExchangeScraper\StackExchangeScraper.csproj">
-      <Project>{6F16F490-50B3-4349-AC97-E798EFD7EC83}</Project>
-      <Name>StackExchangeScraper</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{1B18CBB6-FB29-4F96-B9F5-E870A9983C67}</Project>
       <Name>Utils</Name>

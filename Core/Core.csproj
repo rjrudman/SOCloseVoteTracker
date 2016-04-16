@@ -92,6 +92,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Managers\QuestionManager.cs" />
     <Compile Include="Managers\SOCVRManager.cs" />
+    <Compile Include="Scrapers\API\APIModels\BaseAPIModel.cs" />
+    <Compile Include="Scrapers\API\APIModels\QuestionApiModel.cs" />
+    <Compile Include="Scrapers\API\StackExchangeAPI.cs" />
+    <Compile Include="Scrapers\Authentication\StackOverflowAuthenticator.cs" />
+    <Compile Include="Scrapers\Chat\LiteChatScraper.cs" />
+    <Compile Include="Scrapers\Models\QuestionModel.cs" />
+    <Compile Include="Scrapers\Sockets\ExchangeSite.cs" />
+    <Compile Include="Scrapers\Utils\RestRequestThrottler.cs" />
+    <Compile Include="Scrapers\Utils\TimeSpanSemaphore.cs" />
     <Compile Include="Workers\Pollers.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -102,10 +111,6 @@
     <ProjectReference Include="..\Data\Data.csproj">
       <Project>{7DD019C3-42A1-4F45-B2E4-1EE18BCD7CAF}</Project>
       <Name>Data</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\StackExchangeScraper\StackExchangeScraper.csproj">
-      <Project>{6F16F490-50B3-4349-AC97-E798EFD7EC83}</Project>
-      <Name>StackExchangeScraper</Name>
     </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{1B18CBB6-FB29-4F96-B9F5-E870A9983C67}</Project>
