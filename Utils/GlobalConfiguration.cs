@@ -54,6 +54,7 @@ namespace Utils
 
         public static long ChatRoomID { get; private set; }
 
+        public static bool EnableHangfire { get; private set; }
         public static bool DisablePolling { get; private set; }
 
         public static string ProxyUrl { get; private set; }

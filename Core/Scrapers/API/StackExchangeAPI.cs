@@ -46,7 +46,7 @@ namespace Core.Scrapers.API
 
         private const int MAX_CONCURRENT_REQUESTS = 25;
         private const int TIMESPAN_PER_REQUEST = 1; //One second
-        private static readonly TimeSpanSemaphore _globalThrottle = new TimeSpanSemaphore(MAX_CONCURRENT_REQUESTS, TimeSpan.FromSeconds(TIMESPAN_PER_REQUEST));
+        private static readonly TimeSpanSemaphore GlobalThrottle = new TimeSpanSemaphore(MAX_CONCURRENT_REQUESTS, TimeSpan.FromSeconds(TIMESPAN_PER_REQUEST));
 
         private static void AuthorizeRequest(IRestRequest attachToRequest)
         {
@@ -210,7 +210,7 @@ namespace Core.Scrapers.API
         private static BaseApiModel<TModelType> AuthenticateAndThrottle<TModelType>(this IRestClient client, IRestRequest request)
         {
             BaseApiModel<TModelType> responseObject = null;
-            _globalThrottle.Run(() =>
+            GlobalThrottle.Run(() =>
             {
                 AuthorizeRequest(request);
                 ThrottleRequest();
@@ -237,11 +237,17 @@ namespace Core.Scrapers.API
 
         private static void AssignNewThrottle<TModelType>(BaseApiModel<TModelType> response)
         {
-            if (!response.BackOff.HasValue)
-                return;
+            DateTime? nextAllowedTime = null;
+            if (response.QuotaRemaining == 0)
+                nextAllowedTime = DateTime.UtcNow.Date.AddDays(1);
+            else if (response.BackOff.HasValue)
+                nextAllowedTime = DateTime.Now.AddSeconds(response.BackOff.Value + 2);
 
-            lock (ThrottleLocker)
-                _nextAllowedRequestTime = DateTime.Now.AddSeconds(response.BackOff.Value + 2);
+            if (nextAllowedTime.HasValue)
+            {
+                lock (ThrottleLocker)
+                    _nextAllowedRequestTime = nextAllowedTime.Value;
+            }
         }
     }
 }

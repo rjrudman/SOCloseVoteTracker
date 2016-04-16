@@ -75,13 +75,13 @@ namespace Core.Managers
         
         public static void QueryQuestionAndLogRequest(int userId, int questionId, string fullMessage)
         {
-            Pollers.QueueQuestionQuery(questionId);
+            //Pollers.QueueQuestionQuery(questionId);
 
-            using (var connection = ReadWriteDataContext.ReadWritePlainConnection())
-                connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });
+            //using (var connection = ReadWriteDataContext.ReadWritePlainConnection())
+            //    connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });
 
-            //Check on the question again in an hour
-            Pollers.QueueQuestionQuery(questionId);
+            ////Check on the question again in an hour
+            //Pollers.QueueQuestionQuery(questionId);
         }
 
         const string UPSERT_CVPLS_SQL = @"INSERT INTO CVPlsRequests(UserId, QuestionId, FullMessage, CreatedAt) VALUES (@UserId, @QuestionId, @FullMessage, GETUTCDATE())";

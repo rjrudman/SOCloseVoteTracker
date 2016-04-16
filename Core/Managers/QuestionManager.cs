@@ -56,7 +56,7 @@ FROM q
             using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 questionIds = con.Query<int>(@"
-SELECT TOP 100 DISTINCT QuestionID FROM QueuedQuestionQueries
+SELECT DISTINCT TOP 100 QuestionID FROM QueuedQuestionQueries
 ")
 .ToList();
                 con.Execute($@"
@@ -74,7 +74,7 @@ DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questio
             using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 questionIds = con.Query<int>(@"
-SELECT TOP 100 DISTINCT QuestionID FROM QueuedQuestionCloseVoteQueries
+SELECT DISTINCT TOP 100 QuestionID FROM QueuedQuestionCloseVoteQueries
 ")
 .ToList();
                 con.Execute($@"
