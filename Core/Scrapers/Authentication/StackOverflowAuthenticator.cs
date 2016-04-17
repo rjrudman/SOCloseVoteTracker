@@ -13,7 +13,9 @@ namespace Core.Scrapers.Authentication
 
         private readonly string _username;
         private readonly string _password;
-        private readonly string[] _alsoAuthenticateSisterSites;
+        private readonly string[] _alsoAuthenticateSisterSites = {
+            "stackexchange.com"
+        };
 
         private static DateTime _refreshCookieTime = DateTime.MinValue;
         private static readonly List<RestResponseCookie> AuthCookies = new List<RestResponseCookie>();
@@ -25,11 +27,10 @@ namespace Core.Scrapers.Authentication
                 return _refreshCookieTime > DateTime.Now;
         }
 
-        public StackOverflowAuthenticator(string username, string password, params string[] alsoAuthenticateSisterSites)
+        public StackOverflowAuthenticator(string username, string password)
         {
             _username = username;
             _password = password;
-            _alsoAuthenticateSisterSites = alsoAuthenticateSisterSites;
         }
 
         private IList<RestResponseCookie> GetAuthCookies()
@@ -60,7 +61,7 @@ namespace Core.Scrapers.Authentication
 
         public void AuthenticateRequest(IRestRequest request)
         {
-            foreach (var cookie in GetAuthCookies())
+            foreach (var cookie  in GetAuthCookies())
                 request.AddCookie(cookie.Name, cookie.Value);
         }
 

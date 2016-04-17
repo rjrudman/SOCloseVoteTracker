@@ -139,7 +139,7 @@ DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(","
                             )
                         {
                             //Now we mark it as new activity
-                            connection.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id });
+                            connection.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id }, trans);
                         }
                     }
 
@@ -193,11 +193,12 @@ DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(","
                             numCloseVotesChanged = true;
                         }
                     }
-                    
-                    if (numCloseVotesChanged)
-                        connection.Execute(@"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE(), LastTimeActive = GETUTCDATE WHERE Id = @questionId", new { questionId = questionId });
-                    else
-                        connection.Execute(@"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE() WHERE Id = @questionId", new { questionId = questionId });
+
+                    connection.Execute(
+                        numCloseVotesChanged
+                            ? @"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE(), LastTimeActive = GETUTCDATE WHERE Id = @questionId"
+                            : @"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE() WHERE Id = @questionId",
+                        new {questionId}, trans);
 
                     trans.Commit();
                 }

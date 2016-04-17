@@ -26,8 +26,7 @@ namespace Core.Scrapers.API
 
         private static readonly StackOverflowAuthenticator Authenticator = new StackOverflowAuthenticator(
             GlobalConfiguration.UserName, 
-            GlobalConfiguration.Password,
-            "stackexchange.com"
+            GlobalConfiguration.Password
         );
 
         //This is *NOT* a secret - fine to have it here.
@@ -105,46 +104,49 @@ namespace Core.Scrapers.API
             var request = new RestRequest($"questions/{questionIdString}");
             request.AddParameter("filter", QUESTION_FILTER_ID);
             request.AddParameter("site", "stackoverflow.com");
+            request.AddParameter("page", 1);
+            request.AddParameter("pagesize", 100);
 
             var response = client.AuthenticateAndThrottle<QuestionApiModel>(request);
             
             var returnData = new List<QuestionModel>();
 
-            Dictionary<int, Question> questionMapping;
             using (var context = new ReadWriteDataContext())
-                questionMapping = context.Questions.Where(q => questionIds.Contains(q.Id)).ToDictionary(q => q.Id, q => q);
-        
-            foreach (var item in response.Items)
             {
-                var currentInfo = new QuestionModel
-                {
-                    Asked = GetDateTimeFromUnixLong(item.CreateDateInt),
-                    Closed = item.ClosedDetails != null,
-                    Deleted = false, //Not sure at the moment..
-                    DeleteVotes = item.DeleteVotes,
-                    ReopenVotes = item.ReopenVotes,
-                    UndeleteVotes = 0,
-                    Tags = item.Tags,
-                    Id = item.QuestionId,
-                    Title = item.Title,
-                };
+                var questionMapping = context.Questions.Where(q => questionIds.Contains(q.Id)).ToDictionary(q => q.Id, q => q);
 
-                if (item.ClosedDetails != null)
+                foreach (var item in response.Items)
                 {
-                    if (item.ClosedDetails.OriginalQuestions != null && item.ClosedDetails.OriginalQuestions.Any())
+                    var currentInfo = new QuestionModel
                     {
-                        var dupeTarget = item.ClosedDetails.OriginalQuestions.Select(oq => oq.QuestionId).FirstOrDefault();
-                        currentInfo.DuplicateParentId = dupeTarget;
+                        Asked = GetDateTimeFromUnixLong(item.CreateDateInt),
+                        Closed = item.ClosedDetails != null,
+                        Deleted = false, //Not sure at the moment..
+                        DeleteVotes = item.DeleteVotes,
+                        ReopenVotes = item.ReopenVotes,
+                        UndeleteVotes = 0,
+                        Tags = item.Tags,
+                        Id = item.QuestionId,
+                        Title = item.Title,
+                    };
+
+                    if (item.ClosedDetails != null)
+                    {
+                        if (item.ClosedDetails.OriginalQuestions != null && item.ClosedDetails.OriginalQuestions.Any())
+                        {
+                            var dupeTarget = item.ClosedDetails.OriginalQuestions.Select(oq => oq.QuestionId).FirstOrDefault();
+                            currentInfo.DuplicateParentId = dupeTarget;
+                        }
                     }
+                    else
+                    {
+                        if (!questionMapping.ContainsKey(currentInfo.Id) || questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes)
+                            Pollers.QueueCloseVoteQuery(currentInfo.Id);
+                    }
+                    returnData.Add(currentInfo);
                 }
-                else
-                {
-                    if (!questionMapping.ContainsKey(currentInfo.Id) || questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes)
-                        Pollers.QueueCloseVoteQuery(currentInfo.Id);
-                }
-                returnData.Add(currentInfo);
             }
-            
+
             return returnData;
         }
 

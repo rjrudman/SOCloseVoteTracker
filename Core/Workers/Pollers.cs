@@ -17,33 +17,31 @@ namespace Core.Workers
             if (!Utils.GlobalConfiguration.DisablePolling)
             {
                 RecurringJob.AddOrUpdate(() => QuestionManager.QueryQueuedQuestions(), "*/2 * * * *");
-                return;
-                //RecurringJob.AddOrUpdate(() => QuestionManager.QueryQueuedCloseVotes(), "*/2 * * * *");
+                RecurringJob.AddOrUpdate(() => QuestionManager.QueryQueuedCloseVotes(), "*/2 * * * *");
 
-                //Every 5 minutes
-                //RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
-                //RecurringJob.AddOrUpdate(() => PollRecentCloseVotes(), "*/5 * * * *");
-                //RecurringJob.AddOrUpdate(() => PollMostCloseVotes(), "*/5 * * * *");
-                //RecurringJob.AddOrUpdate(() => ReviewManager.GetRecentCloseVoteReviews(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => PollRecentCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => PollMostCloseVotes(), "*/5 * * * *");
+                RecurringJob.AddOrUpdate(() => ReviewManager.GetRecentCloseVoteReviews(), "*/5 * * * *");
 
-                ////Every hour
-                //RecurringJob.AddOrUpdate(() => SOCVRManager.CheckCVPls(), "0 * * * *");
+                //Every hour
+                RecurringJob.AddOrUpdate(() => SOCVRManager.CheckCVPls(), "0 * * * *");
 
-                ////Query this every 15 minutes (except on the hour)
-                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "15,30,45 * * * *");
+                //Query this every 15 minutes (except on the hour)
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFifteenMins(), "15,30,45 * * * *");
 
-                ////Query this every hour (except every four hours)
-                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23 * * *");
+                //Query this every hour (except every four hours)
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsHour(), "0 1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23 * * *");
 
-                ////Every 4 hours (except at midnight)
-                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsFourHours(), "0 4,8,12,16,20 * * *");
+                //Every 4 hours (except at midnight)
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsFourHours(), "0 4,8,12,16,20 * * *");
 
-                ////Every day
-                //RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
+                //Every day
+                RecurringJob.AddOrUpdate(() => PollActiveQuestionsDay(), "0 0 * * *");
 
                 //ChatroomManager.JoinAndWatchSOCVR();
 
-                //PollFrontPage();
+                PollFrontPage();
             }
         }
         

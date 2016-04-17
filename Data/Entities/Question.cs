@@ -29,8 +29,6 @@ namespace Data.Entities
         public virtual VoteType CloseVoteType { get; set; }
         public int? CloseVoteTypeId { get; set; }
 
-        [ForeignKey("DuplicateParentId")]
-        public virtual Question DuplicateParent { get; set; }
         public int? DuplicateParentId { get; set; }
 
         public DateTime LastUpdated { get; set; }
@@ -39,10 +37,7 @@ namespace Data.Entities
 
         [InverseProperty("Question")]
         public virtual IList<CloseVote> CloseVotes { get; set; }
-
-        [InverseProperty("DuplicateParent")]
-        public virtual IList<Question> DuplicateChildren { get; set; }
-
+        
         [InverseProperty("Question")]
         public virtual IList<CVPlsRequest> CVPlsRequests { get; set; }
     }
