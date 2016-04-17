@@ -8,7 +8,7 @@ namespace Core.Scrapers.Utils
     public class RestRequestThrottler
     {
         //SO deems 30 requests / sec as abusive, and caps the API at that. Let's stay a bit under (25 / sec)
-        private const int MAX_CONCURRENT_REQUESTS = 25;
+        private const int MAX_CONCURRENT_REQUESTS = 5;
         private const int TIMESPAN_PER_REQUEST = 1; //One second
 
         private readonly StackOverflowAuthenticator _authenticator;
