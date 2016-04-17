@@ -111,34 +111,12 @@ DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(","
                 using (var trans = connection.BeginTransaction())
                 {
                     context.Database.UseTransaction(trans);
-
-                    var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
                     
                     connection.Execute(UPSERT_QUESTION_SQL, question, trans);
                     foreach (var tag in question.Tags)
                     {
                         connection.Execute(UPSERT_TAG_SQL, new { tagName = tag }, trans);
                         connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
-                    }
-
-                    //We mark it as active when:
-                    //Delete status changed
-                    //Closed status changed
-                    //Different amount of (un)Delete votes
-                    //Different amount of reopen/close votes
-                    if (existingQuestion != null)
-                    {
-                        if (
-                            (existingQuestion.Deleted != question.Deleted)
-                            || (existingQuestion.Closed != question.Closed)
-                            || (existingQuestion.DeleteVotes != question.DeleteVotes)
-                            || (existingQuestion.UndeleteVotes != question.UndeleteVotes)
-                            || (existingQuestion.ReopenVotes != question.ReopenVotes)
-                            )
-                        {
-                            //Now we mark it as new activity
-                            connection.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id }, trans);
-                        }
                     }
 
                     trans.Commit();
