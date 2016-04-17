@@ -82,7 +82,7 @@ DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questio
             using (var con = ReadWriteDataContext.ReadWritePlainConnection())
             {
                 questionIds = con.Query<int>(@"
-SELECT DISTINCT TOP 100 QuestionID, LastUpdated 
+SELECT DISTINCT TOP 20 QuestionID, LastUpdated 
 FROM QueuedQuestionCloseVoteQueries
 LEFT JOIN Questions on QueuedQuestionCloseVoteQueries.QuestionId < Questions.Id
 WHERE Questions.Id IS NULL
