@@ -17,8 +17,7 @@ namespace Core.Workers
             if (!Utils.GlobalConfiguration.DisablePolling)
             {
                 RecurringJob.AddOrUpdate(() => QuestionManager.QueryQueuedQuestions(), "*/2 * * * *");
-                RecurringJob.AddOrUpdate(() => QuestionManager.QueryQueuedCloseVotes(), "*/2 * * * *");
-
+                
                 RecurringJob.AddOrUpdate(() => RecentlyClosed(), "*/5 * * * *");
                 RecurringJob.AddOrUpdate(() => PollRecentCloseVotes(), "*/5 * * * *");
                 RecurringJob.AddOrUpdate(() => PollMostCloseVotes(), "*/5 * * * *");
@@ -113,26 +112,10 @@ INSERT INTO QueuedQuestionQueries (questionId) VALUES (@questionId)
             }
         }
 
-        public static void QueueCloseVoteQuery(int questionId)
-        {
-            using (var con = ReadWriteDataContext.PlainConnection())
-            {
-                con.Execute(@"
-INSERT INTO QueuedQuestionCloseVoteQueries (questionId) VALUES (@questionId)
-", new { questionId});
-            }
-        }
-
         public static void QueueQuestionQueries(IEnumerable<int> questionIds)
         {
             foreach (var questionId in questionIds)
                 QueueQuestionQuery(questionId);
-        }
-
-        public static void QueueCloseVoteQueries(IEnumerable<int> questionIds)
-        {
-            foreach (var questionId in questionIds)
-                QueueCloseVoteQuery(questionId);
         }
     }
 }

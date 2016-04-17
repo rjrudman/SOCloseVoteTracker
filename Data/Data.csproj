@@ -56,7 +56,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Entities\QueuedQuestionCloseVoteQuery.cs" />
     <Compile Include="Entities\QueuedQuestionQuery.cs" />
     <Compile Include="Migrations\201604130012232_ClearOldHangfireJobs.cs" />
     <Compile Include="Migrations\201604130012232_ClearOldHangfireJobs.Designer.cs">
@@ -69,6 +68,10 @@
     <Compile Include="Migrations\201604170141566_RemoveForeignKeyForDuplicates.cs" />
     <Compile Include="Migrations\201604170141566_RemoveForeignKeyForDuplicates.Designer.cs">
       <DependentUpon>201604170141566_RemoveForeignKeyForDuplicates.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201604170240230_RemoveCloseVoteQueue.cs" />
+    <Compile Include="Migrations\201604170240230_RemoveCloseVoteQueue.Designer.cs">
+      <DependentUpon>201604170240230_RemoveCloseVoteQueue.cs</DependentUpon>
     </Compile>
     <Compile Include="ReadWriteDataContext.cs" />
     <Compile Include="Entities\CloseVote.cs" />
@@ -257,6 +260,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201604170141566_RemoveForeignKeyForDuplicates.resx">
       <DependentUpon>201604170141566_RemoveForeignKeyForDuplicates.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201604170240230_RemoveCloseVoteQueue.resx">
+      <DependentUpon>201604170240230_RemoveCloseVoteQueue.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

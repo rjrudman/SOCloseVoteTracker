@@ -5,6 +5,7 @@ using Core.Scrapers.API;
 using Core.Scrapers.Models;
 using Dapper;
 using Data;
+using Data.Entities;
 
 namespace Core.Managers
 {
@@ -76,33 +77,10 @@ DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questio
                 UpsertQuestionInformation(questionModel);
         }
 
-        public static void QueryQueuedCloseVotes()
-        {
-            IList<int> questionIds;
-            using (var con = ReadWriteDataContext.PlainConnection())
-            {
-                questionIds = con.Query<int>(@"
-SELECT DISTINCT TOP 20 QuestionID
-FROM QueuedQuestionCloseVoteQueries
-LEFT JOIN Questions on QueuedQuestionCloseVoteQueries.QuestionId < Questions.Id
-", new { fiveMinAgo = DateTime.UtcNow.AddMinutes(-5) })
-.Distinct().ToList();
-                if (!questionIds.Any())
-                    return;
-
-                con.Execute($@"
-DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(",", questionIds)})
-");
-            }
-            foreach (var questionId in questionIds)
-            {
-                var questionVoteInfo = StackExchangeAPI.GetQuestionVotes(questionId);
-                UpsertQuestionCloseVoteInformation(questionId, questionVoteInfo);
-            }
-        }
-
         private static void UpsertQuestionInformation(QuestionModel question)
         {
+            var numCloseVotesChanged = false;
+            Question existingQuestion;
             using (var context = new ReadWriteDataContext())
             {
                 var connection = context.Database.Connection;
@@ -111,7 +89,12 @@ DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(","
                 using (var trans = connection.BeginTransaction())
                 {
                     context.Database.UseTransaction(trans);
-                    
+
+                    existingQuestion = context.Questions.FirstOrDefault(q => q.Id == question.Id);
+                    var existingVotes = existingQuestion?.CloseVotes
+                        .GroupBy(ev => ev.VoteTypeId)
+                        .ToDictionary(g => g.Key, g => g.Count()) ?? new Dictionary<int, int>();
+
                     connection.Execute(UPSERT_QUESTION_SQL, question, trans);
                     foreach (var tag in question.Tags)
                     {
@@ -119,66 +102,67 @@ DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(","
                         connection.Execute(UPSERT_QUESTION_TAG_SQL, new { questionID = question.Id, tagName = tag }, trans);
                     }
 
+                    if (question.CloseVotes != null)
+                    {
+                        foreach (var voteGroup in question.CloseVotes)
+                        {
+                            int numToInsert;
+                            if (existingVotes.ContainsKey(voteGroup.Key))
+                                numToInsert = voteGroup.Value - existingVotes[voteGroup.Key];
+                            else
+                                numToInsert = voteGroup.Value;
+
+                            for (var i = 0; i < numToInsert; i++)
+                            {
+                                connection.Execute(INSERT_QUESTION_VOTE_SQL, new { questionId = question.Id, voteTypeId = voteGroup.Key }, trans);
+                                numCloseVotesChanged = true;
+                            }
+                        }
+                        foreach (var existingVote in existingVotes)
+                        {
+                            int numToDelete;
+                            if (question.CloseVotes.ContainsKey(existingVote.Key))
+                                numToDelete = existingVote.Value - question.CloseVotes[existingVote.Key];
+                            else
+                                numToDelete = existingVote.Value;
+
+                            //Delete newest vote of that type
+                            for (var i = 0; i < numToDelete; i++)
+                            {
+                                connection.Execute(DELETE_NEWEST_VOTE_SQL, new { questionId = question.Id, voteTypeId = existingVote.Key }, trans);
+                                numCloseVotesChanged = true;
+                            }
+                        }
+                    }
+
                     trans.Commit();
                 }
             }
-        }
 
-        private static void UpsertQuestionCloseVoteInformation(int questionId, IDictionary<int, int> closeVoteInfo)
-        {
-            using (var context = new ReadWriteDataContext())
+            //We mark it as active when:
+            //Delete status changed
+            //Closed status changed
+            //Different amount of (un)Delete votes
+            //Different amount of reopen/close votes
+            if (existingQuestion != null)
             {
-                var connection = context.Database.Connection;
-                connection.Open();
-                using (var trans = connection.BeginTransaction())
+                if (
+                    (existingQuestion.Deleted != question.Deleted)
+                    || (existingQuestion.Closed != question.Closed)
+                    || (existingQuestion.DeleteVotes != question.DeleteVotes)
+                    || (existingQuestion.UndeleteVotes != question.UndeleteVotes)
+                    || (numCloseVotesChanged)
+                    || (existingQuestion.ReopenVotes != question.ReopenVotes)
+                    )
                 {
-                    context.Database.UseTransaction(trans);
-
-                    var existingQuestion = context.Questions.FirstOrDefault(q => q.Id == questionId);
-                    var existingVotes = existingQuestion?.CloseVotes
-                        .GroupBy(ev => ev.VoteTypeId)
-                        .ToDictionary(g => g.Key, g => g.Count()) ?? new Dictionary<int, int>();
-
-                    bool numCloseVotesChanged = false;
-                    foreach (var voteGroup in closeVoteInfo)
+                    //Now we mark it as new activity
+                    using (var con = ReadWriteDataContext.PlainConnection())
                     {
-                        int numToInsert;
-                        if (existingVotes.ContainsKey(voteGroup.Key))
-                            numToInsert = voteGroup.Value - existingVotes[voteGroup.Key];
-                        else
-                            numToInsert = voteGroup.Value;
-
-                        for (var i = 0; i < numToInsert; i++)
-                        {
-                            connection.Execute(INSERT_QUESTION_VOTE_SQL, new {questionId, voteTypeId = voteGroup.Key }, trans);
-                            numCloseVotesChanged = true;
-                        }
+                        con.Execute(@"UPDATE QUESTIONS SET LastTimeActive = LastUpdated WHERE Id = @questionId", new { questionId = question.Id });
                     }
-                    foreach (var existingVote in existingVotes)
-                    {
-                        int numToDelete;
-                        if (closeVoteInfo.ContainsKey(existingVote.Key))
-                            numToDelete = existingVote.Value - closeVoteInfo[existingVote.Key];
-                        else
-                            numToDelete = existingVote.Value;
-
-                        //Delete newest vote of that type
-                        for (var i = 0; i < numToDelete; i++)
-                        {
-                            connection.Execute(DELETE_NEWEST_VOTE_SQL, new {questionId, voteTypeId = existingVote.Key}, trans);
-                            numCloseVotesChanged = true;
-                        }
-                    }
-
-                    connection.Execute(
-                        numCloseVotesChanged
-                            ? @"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE(), LastTimeActive = GETUTCDATE() WHERE Id = @questionId"
-                            : @"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE() WHERE Id = @questionId",
-                        new {questionId}, trans);
-
-                    trans.Commit();
                 }
             }
+
         }
     }
 }

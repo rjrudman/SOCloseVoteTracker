@@ -142,9 +142,13 @@ namespace Core.Scrapers.API
                     {
                         //If it's new and has close votes, then query it.
                         //If it's not new, only query it if the number of votes has changed
-                        if ((!questionMapping.ContainsKey(currentInfo.Id) && item.CloseVotes > 0) 
-                            || (questionMapping.ContainsKey(currentInfo.Id) && questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes))
-                            Pollers.QueueCloseVoteQuery(currentInfo.Id);
+                        if ((!questionMapping.ContainsKey(currentInfo.Id) && item.CloseVotes > 0)
+                            ||
+                            (questionMapping.ContainsKey(currentInfo.Id) &&
+                             questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes))
+                        {
+                            currentInfo.CloseVotes = GetQuestionVotes(currentInfo.Id);
+                        }
                     }
                     returnData.Add(currentInfo);
                 }
