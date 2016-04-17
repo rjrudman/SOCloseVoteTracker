@@ -196,7 +196,7 @@ DELETE FROM QueuedQuestionCloseVoteQueries WHERE QuestionID IN ({string.Join(","
 
                     connection.Execute(
                         numCloseVotesChanged
-                            ? @"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE(), LastTimeActive = GETUTCDATE WHERE Id = @questionId"
+                            ? @"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE(), LastTimeActive = GETUTCDATE() WHERE Id = @questionId"
                             : @"UPDATE QUESTIONS SET LastUpdated = GETUTCDATE() WHERE Id = @questionId",
                         new {questionId}, trans);
 

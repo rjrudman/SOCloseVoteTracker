@@ -140,7 +140,7 @@ namespace Core.Scrapers.API
                     }
                     else
                     {
-                        if (!questionMapping.ContainsKey(currentInfo.Id) || questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes)
+                        if ((!questionMapping.ContainsKey(currentInfo.Id) && item.CloseVotes > 0) || questionMapping[currentInfo.Id].CloseVotes.Count != item.CloseVotes)
                             Pollers.QueueCloseVoteQuery(currentInfo.Id);
                     }
                     returnData.Add(currentInfo);
