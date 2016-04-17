@@ -68,7 +68,7 @@ namespace Core.Workers
         public static void PollActiveQuestions(TimeSpan timeLastActive)
         {
             var timeActiveSeconds = timeLastActive.TotalSeconds;
-            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
+            using (var con = ReadWriteDataContext.PlainConnection())
             {
                 var questionIds = con.Query<int>(@"SELECT Id FROM QUESTIONS WHERE (DATEDIFF(DAY, [LastTimeActive], GETUTCDATE()) + DATEDIFF(SECOND, [LastTimeActive], GETUTCDATE())) <= @timeActiveSeconds", new { timeActiveSeconds }).ToList();
                 foreach (var questionId in questionIds)
@@ -102,8 +102,11 @@ namespace Core.Workers
 
         public static void QueueQuestionQuery(int questionId)
         {
-            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
+            using (var con = ReadWriteDataContext.PlainConnection())
             {
+                var lastUpdated = con.Query<DateTime?>("SELECT LastUpdated FROM Questions Where Id = @questionId", new { questionId }).FirstOrDefault();
+                if (lastUpdated.HasValue && lastUpdated.Value > DateTime.UtcNow.AddMinutes(-5))
+                    return;
                 con.Execute(@"
 INSERT INTO QueuedQuestionQueries (questionId) VALUES (@questionId)
 ", new { questionId });
@@ -112,7 +115,7 @@ INSERT INTO QueuedQuestionQueries (questionId) VALUES (@questionId)
 
         public static void QueueCloseVoteQuery(int questionId)
         {
-            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
+            using (var con = ReadWriteDataContext.PlainConnection())
             {
                 con.Execute(@"
 INSERT INTO QueuedQuestionCloseVoteQueries (questionId) VALUES (@questionId)

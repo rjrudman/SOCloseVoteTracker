@@ -9,22 +9,15 @@ namespace Data
     public class ReadWriteDataContext : DbContext
     {
         public const string READ_WRITE_CONNECTION_STRING_NAME = "ReadWriteConnection";
-        public const string READ_ONLY_CONNECTION_STRING_NAME = "ReadOnlyConnection";
-
-        public static IDbConnection ReadWritePlainConnection()
+        
+        public static IDbConnection PlainConnection()
         {
             var connectionString = ConfigurationManager.ConnectionStrings[READ_WRITE_CONNECTION_STRING_NAME].ConnectionString;
             var connection = new SqlConnection(connectionString);
             connection.Open();
             return connection;
         }
-        public static IDbConnection ReadOnlyPlainConnection()
-        {
-            var connectionString = ConfigurationManager.ConnectionStrings[READ_ONLY_CONNECTION_STRING_NAME].ConnectionString;
-            var connection = new SqlConnection(connectionString);
-            connection.Open();
-            return connection;
-        }
+
 
         public ReadWriteDataContext() : base(READ_WRITE_CONNECTION_STRING_NAME) { }
         public ReadWriteDataContext(string connectionString) : base(connectionString) { }
@@ -69,6 +62,15 @@ namespace Data
 
     public class ReadOnlyDataContext : ReadWriteDataContext
     {
+        public static new IDbConnection PlainConnection()
+        {
+            var connectionString = ConfigurationManager.ConnectionStrings[READ_ONLY_CONNECTION_STRING_NAME].ConnectionString;
+            var connection = new SqlConnection(connectionString);
+            connection.Open();
+            return connection;
+        }
+
+        public const string READ_ONLY_CONNECTION_STRING_NAME = "ReadOnlyConnection";
         public ReadOnlyDataContext() : base(READ_ONLY_CONNECTION_STRING_NAME) { }
     }
 

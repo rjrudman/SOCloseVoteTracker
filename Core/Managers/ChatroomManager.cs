@@ -77,7 +77,7 @@ namespace Core.Managers
         {
             Pollers.QueueQuestionQuery(questionId);
 
-            using (var connection = ReadWriteDataContext.ReadWritePlainConnection())
+            using (var connection = ReadWriteDataContext.PlainConnection())
                 connection.Execute(UPSERT_CVPLS_SQL, new { UserId = userId, QuestionId = questionId, FullMessage = fullMessage });
         }
 

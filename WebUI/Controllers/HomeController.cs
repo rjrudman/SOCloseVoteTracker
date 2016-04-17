@@ -66,7 +66,7 @@ namespace WebUI.Controllers
         {
             new Thread(() =>
             {
-                using (var con = ReadWriteDataContext.ReadWritePlainConnection())
+                using (var con = ReadWriteDataContext.PlainConnection())
                 {
                     var questionId = con.Query<int?>("SELECT Id from QUESTIONS Where ReviewID = @reviewId", new { reviewId = reviewId }).FirstOrDefault();
                     if (questionId != null)
@@ -118,7 +118,7 @@ namespace WebUI.Controllers
         {
             try
             {
-                using (var con = ReadWriteDataContext.ReadOnlyPlainConnection())
+                using (var con = ReadWriteDataContext.PlainConnection())
                 {
                     var formattedResults = new List<Dictionary<string, object>>();
                     var results = con.Query(sql).ToList();

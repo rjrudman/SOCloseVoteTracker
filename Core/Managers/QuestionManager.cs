@@ -54,7 +54,7 @@ FROM q
         public static void QueryQueuedQuestions()
         {
             IList<int> questionIds;
-            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
+            using (var con = ReadWriteDataContext.PlainConnection())
             {
                 questionIds = con.Query<int>(@"
 SELECT DISTINCT TOP 100 QuestionID, LastUpdated 
@@ -79,7 +79,7 @@ DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questio
         public static void QueryQueuedCloseVotes()
         {
             IList<int> questionIds;
-            using (var con = ReadWriteDataContext.ReadWritePlainConnection())
+            using (var con = ReadWriteDataContext.PlainConnection())
             {
                 questionIds = con.Query<int>(@"
 SELECT DISTINCT TOP 20 QuestionID, LastUpdated 
