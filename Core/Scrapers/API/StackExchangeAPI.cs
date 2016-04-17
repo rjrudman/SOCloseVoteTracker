@@ -43,7 +43,7 @@ namespace Core.Scrapers.API
 
         private static readonly Regex AccessTokenRegex = new Regex(@"access_token=(?<accessToken>.+)&expires=(?<expires>\d+)");
 
-        private const int MAX_CONCURRENT_REQUESTS = 25;
+        private const int MAX_CONCURRENT_REQUESTS = 15;
         private const int TIMESPAN_PER_REQUEST = 1; //One second
         private static readonly TimeSpanSemaphore GlobalThrottle = new TimeSpanSemaphore(MAX_CONCURRENT_REQUESTS, TimeSpan.FromSeconds(TIMESPAN_PER_REQUEST));
 
