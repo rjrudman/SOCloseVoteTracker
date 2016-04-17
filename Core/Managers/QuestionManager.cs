@@ -57,13 +57,13 @@ FROM q
             using (var con = ReadWriteDataContext.PlainConnection())
             {
                 questionIds = con.Query<int>(@"
-SELECT DISTINCT TOP 100 QuestionID, LastUpdated 
+SELECT DISTINCT TOP 100 QuestionID
 FROM QueuedQuestionQueries
 LEFT JOIN Questions on QueuedQuestionQueries.QuestionId < Questions.Id
 WHERE Questions.Id IS NULL
 OR Questions.LastUpdated < @fiveMinAgo
 ", new { fiveMinAgo = DateTime.UtcNow.AddMinutes(-5) })
-.ToList();
+.Distinct().ToList();
                 if (!questionIds.Any())
                     return;
 
@@ -82,13 +82,11 @@ DELETE FROM QueuedQuestionQueries WHERE QuestionID IN ({string.Join(",", questio
             using (var con = ReadWriteDataContext.PlainConnection())
             {
                 questionIds = con.Query<int>(@"
-SELECT DISTINCT TOP 20 QuestionID, LastUpdated 
+SELECT DISTINCT TOP 20 QuestionID
 FROM QueuedQuestionCloseVoteQueries
 LEFT JOIN Questions on QueuedQuestionCloseVoteQueries.QuestionId < Questions.Id
-WHERE Questions.Id IS NULL
-OR Questions.LastUpdated < @fiveMinAgo
 ", new { fiveMinAgo = DateTime.UtcNow.AddMinutes(-5) })
-.ToList();
+.Distinct().ToList();
                 if (!questionIds.Any())
                     return;
 
