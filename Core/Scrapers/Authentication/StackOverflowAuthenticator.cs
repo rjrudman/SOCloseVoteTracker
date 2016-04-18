@@ -24,7 +24,7 @@ namespace Core.Scrapers.Authentication
         private static bool CurrentAuthCookiesValid()
         {
             lock(CookieLocker)
-                return _refreshCookieTime > DateTime.Now;
+                return _refreshCookieTime > DateTime.UtcNow;
         }
 
         public StackOverflowAuthenticator(string username, string password)

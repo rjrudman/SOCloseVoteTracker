@@ -47,6 +47,7 @@ namespace Core.Scrapers.API
         private const int TIMESPAN_PER_REQUEST = 1; //One second
         private static readonly TimeSpanSemaphore GlobalThrottle = new TimeSpanSemaphore(MAX_CONCURRENT_REQUESTS, TimeSpan.FromSeconds(TIMESPAN_PER_REQUEST));
 
+
         private static void AuthorizeRequest(IRestRequest attachToRequest)
         {
             lock (AccessTokenLocker)
@@ -234,6 +235,12 @@ namespace Core.Scrapers.API
 
         private static readonly object ThrottleLocker = new object();
         private static DateTime _nextAllowedRequestTime = DateTime.MinValue;
+        
+        public static bool CanExecute()
+        {
+            lock (ThrottleLocker)
+                return (_nextAllowedRequestTime - DateTime.UtcNow).TotalMinutes < 5;
+        }
 
         private static void ThrottleRequest()
         {
