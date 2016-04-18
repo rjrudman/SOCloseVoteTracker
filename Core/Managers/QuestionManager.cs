@@ -65,7 +65,10 @@ WHERE Questions.Id IS NULL
 OR Questions.LastUpdated < @fiveMinAgo
 ", new { fiveMinAgo = DateTime.UtcNow.AddMinutes(-5) })
 .Distinct().ToList();
-                if (!questionIds.Any())
+                if (questionIds.Count < 100)
+                    return;
+
+                if (!StackExchangeAPI.CanExecute())
                     return;
 
                 con.Execute($@"
